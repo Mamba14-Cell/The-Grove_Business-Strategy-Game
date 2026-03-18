@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Grove</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --soil:#1C0F08;--bark:#6B4226;--bark-light:#A0673A;
+  --leaf-dark:#1A4731;--leaf-mid:#2D6A4F;--leaf-light:#52B788;--leaf-pale:#A8DABC;
+  --sun:#F4A261;--sun-pale:#FDE8C8;--sky-top:#1B4332;--sky-mid:#2D6A4F;
+  --fruit:#D62828;--fruit-light:#E07A5F;--bamboo:#52B788;--bamboo-dark:#2D6A4F;
+  --parchment:#FBF5E6;--parchment-dark:#F0E6CC;--ink:#1A1208;--ink-light:#5C3D1E;
+  --gold:#C8960C;--gold-light:#F4C842;--silver:#8B9BAE;
+  --card:#FFFDF7;--border:rgba(108,66,38,0.15);
+  --ff-display:'Cormorant Garamond',Georgia,serif;
+  --ff-body:'Jost',sans-serif;
+  --ease-spring:cubic-bezier(0.34,1.56,0.64,1);
+  --ease-smooth:cubic-bezier(0.4,0,0.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--ff-body);
+  background:var(--parchment);
+  color:var(--ink);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* Atmospheric background */
+body::before{
+  content:'';
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 10%, rgba(82,183,136,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 80% 90%, rgba(244,162,97,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 50% at 50% 50%, rgba(251,245,230,0) 0%, var(--parchment) 100%);
+  pointer-events:none;z-index:0;
+}
+
+/* Floating particles */
+.particle{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:0;
+  animation:drift linear infinite;opacity:0;
+}
+@keyframes drift{
+  0%{transform:translateY(100vh) rotate(0deg);opacity:0}
+  10%{opacity:0.4}
+  90%{opacity:0.2}
+  100%{transform:translateY(-10vh) rotate(360deg);opacity:0}
+}
+
+#app{
+  max-width:640px;margin:0 auto;
+  padding:1.5rem 1rem 4rem;
+  position:relative;z-index:1;
+}
+
+/* === HEADER === */
+.header{
+  text-align:center;
+  padding-bottom:1.25rem;
+  margin-bottom:1.5rem;
+  border-bottom:1px solid var(--border);
+  position:relative;
+}
+.header-leaf-l,.header-leaf-r{
+  position:absolute;top:50%;transform:translateY(-50%);
+  font-size:20px;opacity:0.4;
+}
+.header-leaf-l{left:0}.header-leaf-r{right:0}
+.grove-title{
+  font-family:var(--ff-display);
+  font-size:36px;font-weight:600;
+  color:var(--leaf-dark);
+  letter-spacing:0.5px;
+  line-height:1;
+  text-shadow:0 1px 0 rgba(255,255,255,0.8);
+}
+.grove-subtitle{
+  font-size:10px;letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--bark-light);
+  margin-top:3px;
+}
+.grove-byline{
+  font-family:var(--ff-display);
+  font-style:italic;
+  font-size:13px;
+  color:var(--bark);
+  margin-top:5px;
+  opacity:0.75;
+}
+/* Language switcher */
+.lang-row{
+  display:flex;justify-content:center;gap:4px;
+  margin-top:10px;
+}
+.lang-btn{
+  font-size:11px;font-family:var(--ff-body);font-weight:500;
+  letter-spacing:0.06em;
+  padding:3px 10px;border-radius:20px;
+  border:1px solid var(--border);
+  background:transparent;color:var(--ink-light);
+  cursor:pointer;transition:all 0.18s;
+}
+.lang-btn:hover,.lang-btn.active{
+  background:var(--leaf-dark);color:#fff;border-color:var(--leaf-dark);
+}
+
+/* === INTRO === */
+.intro-text{
+  font-size:14px;color:var(--ink-light);
+  line-height:1.8;text-align:center;
+  max-width:440px;margin:0 auto 1.5rem;
+}
+.tree-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:10px;margin-bottom:1.5rem;
+}
+.tree-card{
+  border:1.5px solid var(--border);border-radius:16px;
+  padding:16px 10px 12px;cursor:pointer;text-align:center;
+  background:var(--card);
+  transition:all 0.22s var(--ease-spring);
+  position:relative;overflow:hidden;
+}
+.tree-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(82,183,136,0.12),transparent 70%);
+  opacity:0;transition:opacity 0.3s;
+}
+.tree-card:hover::before,.tree-card.active::before{opacity:1}
+.tree-card:hover{transform:translateY(-4px);border-color:var(--leaf-mid);box-shadow:0 8px 24px rgba(45,106,79,0.12)}
+.tree-card.active{border-color:var(--leaf-mid);box-shadow:0 0 0 3px rgba(45,106,79,0.15),0 8px 24px rgba(45,106,79,0.12);transform:translateY(-4px)}
+.tree-svg-preview{height:72px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:8px}
+.tree-name{font-family:var(--ff-display);font-size:16px;font-weight:600;color:var(--leaf-dark)}
+.tree-trait{font-size:11px;color:var(--bark-light);margin-top:3px;line-height:1.4}
+.tree-desc{
+  font-size:12px;color:var(--ink-light);line-height:1.65;
+  padding:10px 14px;background:rgba(45,106,79,0.06);
+  border-radius:10px;margin-bottom:1.25rem;
+  border-left:3px solid var(--leaf-light);
+}
+
+/* === STAGE VISUAL === */
+.stage-scene{
+  border-radius:20px;margin-bottom:1.25rem;
+  overflow:hidden;position:relative;
+  height:200px;
+}
+.scene-sky{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,#C8E6C9 0%,#A5D6A7 40%,#81C784 70%,#8D6E63 85%,#6D4C41 100%);
+}
+.scene-clouds{
+  position:absolute;top:12px;left:0;right:0;
+  display:flex;gap:20px;padding:0 20px;opacity:0.5;
+}
+.cloud{
+  background:#fff;border-radius:20px;
+  height:14px;flex:1;opacity:0.6;
+  animation:cloudDrift 8s ease-in-out infinite alternate;
+}
+.cloud:nth-child(2){animation-delay:-3s;height:10px}
+.cloud:nth-child(3){animation-delay:-6s;height:12px}
+@keyframes cloudDrift{from{transform:translateX(-4px)}to{transform:translateX(4px)}}
+.scene-ground{
+  position:absolute;bottom:0;left:0;right:0;height:44px;
+  background:linear-gradient(180deg,#8D6E63 0%,#5D4037 50%,#4E342E 100%);
+}
+.scene-ground::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:6px;
+  background:linear-gradient(90deg,#A1887F,#795548,#8D6E63,#6D4C41,#A1887F);
+}
+.scene-tree{
+  position:absolute;bottom:38px;left:50%;transform:translateX(-50%);
+  transition:all 0.6s var(--ease-spring);
+  filter:drop-shadow(0 4px 12px rgba(26,71,49,0.25));
+}
+.stage-badge{
+  position:absolute;top:12px;left:14px;
+  background:rgba(255,255,255,0.85);backdrop-filter:blur(4px);
+  border-radius:20px;padding:3px 12px;
+  font-size:11px;font-weight:500;letter-spacing:0.06em;
+  color:var(--leaf-dark);border:1px solid rgba(45,106,79,0.2);
+}
+.level-badge{
+  position:absolute;top:12px;right:14px;
+  background:var(--gold);color:#fff;
+  border-radius:20px;padding:3px 12px;
+  font-size:11px;font-weight:500;
+  font-family:var(--ff-display);letter-spacing:0.04em;
+  box-shadow:0 2px 8px rgba(200,150,12,0.4);
+}
+
+/* === XP BAR === */
+.xp-row{margin-bottom:1.25rem}
+.xp-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--bark-light);margin-bottom:5px;font-weight:500;letter-spacing:0.04em}
+.xp-track{
+  height:7px;background:rgba(108,66,38,0.1);
+  border-radius:4px;overflow:hidden;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,0.1);
+}
+.xp-fill{
+  height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--leaf-mid),var(--leaf-light),var(--gold));
+  background-size:200% 100%;
+  animation:shimmer 3s linear infinite;
+  transition:width 0.6s var(--ease-smooth);
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* === STATS === */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.25rem}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:10px 12px;
+  position:relative;overflow:hidden;
+  transition:transform 0.2s var(--ease-spring);
+}
+.stat-card.pulse{animation:statPulse 0.5s var(--ease-spring)}
+@keyframes statPulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+.stat-header{display:flex;align-items:center;gap:5px;margin-bottom:6px}
+.stat-icon{font-size:14px}
+.stat-name{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--bark-light);font-weight:500}
+.stat-val{font-size:22px;font-weight:300;color:var(--ink)}
+.stat-bar{height:3px;background:rgba(108,66,38,0.08);border-radius:2px;margin-top:6px;overflow:hidden}
+.stat-fill{height:100%;border-radius:2px;transition:width 0.5s var(--ease-smooth)}
+.fill-sun{background:linear-gradient(90deg,#F4A261,#F4C842)}
+.fill-rain{background:linear-gradient(90deg,#4FC3F7,#52B788)}
+.fill-soil{background:linear-gradient(90deg,#A0673A,#C8960C)}
+
+/* === SCENARIO === */
+.scenario-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:1.25rem 1.25rem 1rem;
+  margin-bottom:1rem;
+  box-shadow:0 2px 12px rgba(26,15,8,0.04);
+}
+.scenario-phase{
+  font-size:10px;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--bark-light);margin-bottom:8px;font-weight:500;
+}
+.scenario-q{
+  font-family:var(--ff-display);font-size:18px;font-weight:600;
+  color:var(--ink);line-height:1.4;margin-bottom:8px;
+}
+.scenario-body{font-size:13px;color:var(--ink-light);line-height:1.75}
+
+/* === CHOICES === */
+.choices{display:flex;flex-direction:column;gap:8px;margin-bottom:1rem}
+.choice{
+  border:1px solid var(--border);border-radius:12px;
+  padding:12px 15px;cursor:pointer;background:var(--card);
+  transition:all 0.18s var(--ease-spring);text-align:left;
+  position:relative;overflow:hidden;
+}
+.choice::after{
+  content:'→';
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  font-size:14px;color:var(--leaf-light);
+  opacity:0;transition:all 0.18s;
+}
+.choice:hover{
+  border-color:var(--leaf-mid);
+  background:#F0FAF4;
+  transform:translateX(4px);
+  box-shadow:0 4px 16px rgba(45,106,79,0.1);
+}
+.choice:hover::after{opacity:1;right:12px}
+.choice-label{font-size:13px;font-weight:500;color:var(--ink)}
+.choice-sub{font-size:11px;color:var(--bark-light);margin-top:3px;line-height:1.5}
+
+/* === OUTCOME === */
+.outcome-wrap{animation:fadeUp 0.4s var(--ease-smooth) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.outcome-banner{
+  border-radius:12px;padding:14px 16px;
+  margin-bottom:1rem;font-size:13px;line-height:1.7;
+  border-left:4px solid;
+}
+.outcome-great{background:#EAF7EF;border-color:#2D6A4F;color:#0D3320}
+.outcome-ok{background:#FEF9EC;border-color:#C8960C;color:#5C3D00}
+.outcome-tough{background:#FEF0ED;border-color:#D62828;color:#5C0A0A}
+.outcome-title{font-weight:500;margin-bottom:4px;font-family:var(--ff-display);font-size:15px}
+
+.insight-card{
+  background:linear-gradient(135deg,#FBF5E6,#F5EDCC);
+  border:1px dashed rgba(108,66,38,0.25);
+  border-radius:12px;padding:12px 16px;margin-bottom:1rem;
+  position:relative;
+}
+.insight-leaf{position:absolute;top:-6px;left:14px;font-size:16px}
+.insight-label{
+  font-size:10px;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:6px;font-weight:500;margin-top:4px;
+}
+.insight-text{font-size:13px;color:var(--ink);line-height:1.7;font-family:var(--ff-display);font-style:italic}
+
+.delta-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center}
+.delta{
+  padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;
+  display:flex;align-items:center;gap:4px;
+}
+.d-up{background:#EAF7EF;color:#1A4731}
+.d-down{background:#FEF0ED;color:#5C0A0A}
+.d-zero{background:#F2EDE4;color:#888}
+.d-xp{background:linear-gradient(135deg,#FDE8C8,#F4C842);color:#5C3D00}
+
+/* === FOREST === */
+.forest-section{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:1.25rem;margin-top:1rem;
+}
+.forest-title{
+  font-family:var(--ff-display);font-size:15px;font-weight:600;
+  color:var(--leaf-dark);margin-bottom:12px;
+}
+.forest-ground{
+  background:linear-gradient(180deg,#A5D6A7 0%,#8D6E63 60%,#6D4C41 100%);
+  border-radius:12px;padding:16px 16px 8px;
+  display:flex;align-items:flex-end;gap:12px;min-height:80px;
+  flex-wrap:wrap;
+}
+.forest-tree-item{
+  display:flex;flex-direction:column;align-items:center;
+  animation:growIn 0.6s var(--ease-spring) forwards;
+  opacity:0;
+}
+@keyframes growIn{
+  from{opacity:0;transform:scaleY(0) translateY(10px);transform-origin:bottom}
+  to{opacity:1;transform:scaleY(1) translateY(0);transform-origin:bottom}
+}
+.forest-empty{font-size:12px;color:var(--bark-light);font-style:italic}
+
+/* === SCORE === */
+.score-screen{text-align:center;animation:fadeUp 0.5s var(--ease-smooth) both}
+.score-hero{
+  background:linear-gradient(135deg,#1A4731,#2D6A4F);
+  border-radius:20px;padding:2rem 1.5rem 1.5rem;
+  margin-bottom:1.25rem;color:#fff;position:relative;overflow:hidden;
+}
+.score-hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(82,183,136,0.3),transparent 70%);
+}
+.score-tree-big{position:relative;z-index:1;margin-bottom:1rem;display:flex;justify-content:center}
+.score-rank{font-family:var(--ff-display);font-size:28px;font-weight:600;position:relative;z-index:1}
+.score-xp{font-size:13px;opacity:0.75;position:relative;z-index:1;margin-top:4px;letter-spacing:0.06em}
+.medals-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.25rem}
+.medal-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:12px 8px;text-align:center;
+}
+.medal-icon{font-size:22px;display:block;margin-bottom:4px}
+.medal-val{font-size:20px;font-weight:300;color:var(--ink)}
+.medal-label{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--bark-light);margin-top:2px}
+
+/* === BUTTONS === */
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{
+  padding:9px 18px;border-radius:10px;
+  border:1px solid var(--border);
+  background:transparent;color:var(--ink);
+  font-size:13px;font-family:var(--ff-body);font-weight:500;
+  cursor:pointer;transition:all 0.18s var(--ease-smooth);
+  letter-spacing:0.02em;
+}
+.btn:hover{background:var(--parchment-dark);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn-primary{
+  background:var(--leaf-dark);color:#fff;border-color:var(--leaf-dark);
+  box-shadow:0 4px 12px rgba(26,71,49,0.3);
+}
+.btn-primary:hover{background:var(--leaf-mid);box-shadow:0 6px 18px rgba(45,106,79,0.35)}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+.divider{height:1px;background:var(--border);margin:1.25rem 0}
+
+/* === TIP PANEL === */
+.tip-panel{
+  border:1px solid rgba(200,150,12,0.25);
+  border-radius:14px;background:linear-gradient(135deg,#FFFBF0,#FFF8E4);
+  overflow:hidden;margin-top:0.75rem;
+}
+.tip-toggle{
+  width:100%;display:flex;align-items:center;gap:10px;
+  padding:10px 14px;cursor:pointer;
+  background:transparent;border:none;text-align:left;
+  font-family:var(--ff-body);transition:background 0.15s;
+}
+.tip-toggle:hover{background:rgba(200,150,12,0.06)}
+.tip-icon{font-size:18px;flex-shrink:0}
+.tip-toggle-label{flex:1;font-size:13px;font-weight:500;color:var(--gold)}
+.tip-chevron{font-size:11px;color:var(--bark-light);transition:transform 0.25s;display:inline-block}
+.tip-chevron.open{transform:rotate(180deg)}
+.tip-body{
+  max-height:0;overflow:hidden;
+  transition:max-height 0.35s var(--ease-smooth);
+}
+.tip-body.open{max-height:600px}
+.tip-inner{padding:0 14px 14px}
+.tip-section{margin-bottom:12px}
+.tip-section:last-child{margin-bottom:0}
+.tip-section-title{
+  font-size:10px;text-transform:uppercase;letter-spacing:0.12em;
+  font-weight:500;color:var(--bark-light);margin-bottom:6px;
+}
+.tip-item{
+  display:flex;gap:8px;align-items:flex-start;
+  margin-bottom:6px;font-size:12px;color:var(--ink-light);line-height:1.6;
+}
+.tip-item:last-child{margin-bottom:0}
+.tip-bullet{
+  flex-shrink:0;width:18px;height:18px;border-radius:50%;
+  background:rgba(200,150,12,0.15);color:var(--gold);
+  font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;
+  margin-top:1px;
+}
+.tip-divider{height:1px;background:rgba(200,150,12,0.15);margin:10px 0}
+.tip-framework{
+  background:rgba(45,106,79,0.06);border-left:3px solid var(--leaf-light);
+  border-radius:0 8px 8px 0;padding:8px 12px;
+  font-size:12px;color:var(--ink-light);line-height:1.65;
+}
+.tip-framework strong{color:var(--leaf-dark);font-weight:500}
+
+/* === REFLECTION CARD (score screen) === */
+.reflection-card{
+  background:linear-gradient(135deg,#F0FAF4,#E8F5EF);
+  border:1px solid rgba(45,106,79,0.2);
+  border-radius:14px;padding:1.1rem 1.25rem;
+  margin-bottom:1.25rem;
+}
+.reflection-title{
+  font-size:10px;text-transform:uppercase;letter-spacing:0.12em;
+  font-weight:500;color:var(--leaf-mid);margin-bottom:10px;
+}
+.reflection-q{
+  font-size:13px;color:var(--ink);line-height:1.7;
+  margin-bottom:8px;padding-bottom:8px;
+  border-bottom:1px solid rgba(45,106,79,0.12);
+}
+.reflection-q:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.reflection-q::before{content:'💬 ';font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- Particles injected by JS -->
+
+<div id="app">
+  <header class="header">
+    <span class="header-leaf-l">🌿</span>
+    <span class="header-leaf-r">🌿</span>
+    <div class="grove-title">The Grove</div>
+    <div class="grove-subtitle" id="hdr-sub">A Business Strategy Game</div>
+    <div class="grove-byline">by Bruno Micali</div>
+    <div class="lang-row">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('pt')">PT</button>
+      <button class="lang-btn" onclick="setLang('it')">IT</button>
+    </div>
+  </header>
+  <div id="root"></div>
+</div>
+
+<script>
+/* ==================== I18N ==================== */
+const T = {
+  en:{
+    subtitle:'A Business Strategy Game',
+    intro_text:'Each tree you grow reflects a real business strategy. Make decisions across five growth stages — earn XP, unlock insights, and build your forest empire.',
+    choose_tree:'Choose your tree — it defines your strategic path:',
+    plant_seed:'Plant your seed →',
+    ask_claude:'Ask Claude for advice ↗',
+    explore_insight:'Explore this insight ↗',
+    debrief:'Debrief with Claude ↗',
+    continue:'Continue growing →',
+    play_again:'Plant another tree',
+    next_scenario:'Next scenario →',
+    stage_progress:'Stage progress',
+    resources:'Resources',trust:'Trust',strategy:'Strategy',
+    root_insight:'Root Insight 🌱',
+    your_forest:'Your forest',
+    trees_label:['tree','trees'],
+    score_labels:{resources:'Resources',trust:'Trust',strategy:'Strategy'},
+    ranks:['Seedling Strategist','Steady Grower','Grove Master','Forest Emperor'],
+    total_xp:'Total XP earned',
+    you_chose:'You chose:',
+    oak_name:'Oak',oak_trait:'Stability & Moats',oak_desc:'Slow, deliberate growth. High trust, strong foundations. Best for sustainable empire building.',
+    bamboo_name:'Bamboo',bamboo_trait:'Agility & Speed',bamboo_desc:'Fast growth, constant adaptation. Thrives in uncertainty. Best for startup and lean methodology thinking.',
+    fruit_name:'Fruit Tree',fruit_trait:'Revenue & Harvest',fruit_desc:'Growth tied to harvest cycles. Revenue timing is everything. Best for commercial strategy and monetisation.',
+    stages:['Seed','Sapling','Established','Mature','Legacy'],
+    level:'Lv',
+  },
+  pt:{
+    subtitle:'Um Jogo de Estratégia Empresarial',
+    intro_text:'Cada árvore que você cultiva reflete uma estratégia empresarial real. Tome decisões em cinco estágios de crescimento — ganhe XP, descubra insights e construa seu império florestal.',
+    choose_tree:'Escolha sua árvore — ela define seu caminho estratégico:',
+    plant_seed:'Plante sua semente →',
+    ask_claude:'Pedir conselho ao Claude ↗',
+    explore_insight:'Explorar este insight ↗',
+    debrief:'Análise com Claude ↗',
+    continue:'Continuar crescendo →',
+    play_again:'Plantar outra árvore',
+    next_scenario:'Próximo cenário →',
+    stage_progress:'Progresso do estágio',
+    resources:'Recursos',trust:'Confiança',strategy:'Estratégia',
+    root_insight:'Insight Raiz 🌱',
+    your_forest:'Sua floresta',
+    trees_label:['árvore','árvores'],
+    score_labels:{resources:'Recursos',trust:'Confiança',strategy:'Estratégia'},
+    ranks:['Estrategista Iniciante','Crescimento Constante','Mestre do Bosque','Imperador da Floresta'],
+    total_xp:'XP total conquistado',
+    you_chose:'Você escolheu:',
+    oak_name:'Carvalho',oak_trait:'Estabilidade & Fossos',oak_desc:'Crescimento lento e deliberado. Alta confiança, bases sólidas. Ideal para construção de impérios sustentáveis.',
+    bamboo_name:'Bambu',bamboo_trait:'Agilidade & Velocidade',bamboo_desc:'Crescimento rápido, adaptação constante. Prospera na incerteza. Ideal para pensamento de startups e metodologia lean.',
+    fruit_name:'Árvore Frutífera',fruit_trait:'Receita & Colheita',fruit_desc:'Crescimento ligado a ciclos de colheita. O timing da receita é tudo. Ideal para estratégia comercial e monetização.',
+    stages:['Semente','Muda','Estabelecida','Madura','Legado'],
+    level:'Nv',
+  },
+  it:{
+    subtitle:'Un Gioco di Strategia Aziendale',
+    intro_text:'Ogni albero che coltivi riflette una vera strategia aziendale. Prendi decisioni in cinque fasi di crescita — guadagna XP, scopri intuizioni e costruisci il tuo impero forestale.',
+    choose_tree:"Scegli il tuo albero — definisce il tuo percorso strategico:",
+    plant_seed:'Pianta il tuo seme →',
+    ask_claude:'Chiedi consiglio a Claude ↗',
+    explore_insight:'Esplora questo insight ↗',
+    debrief:'Debriefing con Claude ↗',
+    continue:'Continua a crescere →',
+    play_again:"Pianta un altro albero",
+    next_scenario:'Prossimo scenario →',
+    stage_progress:'Progresso della fase',
+    resources:'Risorse',trust:'Fiducia',strategy:'Strategia',
+    root_insight:'Intuizione Radice 🌱',
+    your_forest:'La tua foresta',
+    trees_label:['albero','alberi'],
+    score_labels:{resources:'Risorse',trust:'Fiducia',strategy:'Strategia'},
+    ranks:['Stratega Novizio','Crescita Costante','Maestro del Bosco','Imperatore della Foresta'],
+    total_xp:'XP totali guadagnati',
+    you_chose:'Hai scelto:',
+    oak_name:'Quercia',oak_trait:'Stabilità & Fossati',oak_desc:'Crescita lenta e deliberata. Alta fiducia, basi solide. Ideale per costruire imperi sostenibili.',
+    bamboo_name:'Bambù',bamboo_trait:'Agilità & Velocità',bamboo_desc:'Crescita rapida, adattamento costante. Prospera nell\'incertezza. Ideale per startup e lean methodology.',
+    fruit_name:'Albero da Frutto',fruit_trait:'Ricavi & Raccolto',fruit_desc:'Crescita legata ai cicli di raccolta. Il timing dei ricavi è tutto. Ideale per strategia commerciale e monetizzazione.',
+    stages:['Seme','Germoglio','Consolidato','Maturo','Eredità'],
+    level:'Lv',
+  }
+};
+
+let lang = 'en';
+function t(k){ return T[lang][k] || T['en'][k] || k; }
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.textContent===l.toUpperCase()));
+  document.getElementById('hdr-sub').textContent=t('subtitle');
+  render();
+}
+
+/* ==================== SCENARIOS ==================== */
+const SCENARIOS_EN = [
+  {
+    stage:0,phase:'Foundation',
+    q:"Before you plant, you must prepare the ground. Your first critical resource decision:",
+    body:"You have 50 units of capital. The market window is open, but so are several risks. How do you allocate your starting resources?",
+    choices:[
+      {label:"Invest 80% in product, 20% reserve",sub:"Build the best possible core before launch",effect:{sun:2,rain:0,soil:3},type:'great',
+       outcome:"Solid roots. Your product quality attracts early believers who become vocal advocates. The reserve protects you when a supplier raises prices unexpectedly.",
+       insight:"Resource concentration in early stages creates compounding quality advantages — the basis of Warren Buffett's 'economic moat' theory.",xp:35},
+      {label:"Split evenly: product, marketing, ops",sub:"Balance all pillars from day one",effect:{sun:1,rain:2,soil:1},type:'ok',
+       outcome:"Balanced start. Nothing exceptional, but nothing breaks. You establish presence across all dimensions — a solid if unremarkable foundation.",
+       insight:"Even resource distribution is the default choice for most founders. It's safe — but rarely produces category leaders. Prioritisation is a strategic skill.",xp:22},
+      {label:"Go all-in: 100% on fast market entry",sub:"Speed is the only moat that matters now",effect:{sun:3,rain:-1,soil:-1},type:'tough',
+       outcome:"Fast entry, thin roots. You get to market quickly but product gaps show. Early customers churn faster than you acquire them. Trust must be rebuilt.",
+       insight:"Speed advantages erode quickly without underlying quality. The lean startup methodology advocates speed — but with rapid learning loops, not recklessness.",xp:15}
+    ]
+  },
+  {
+    stage:1,phase:'Early Growth',
+    q:"A competitor enters your market with a similar product at 30% lower price. Your response?",
+    body:"Your sapling is growing steadily when an established player notices your traction and launches a competing product. They have more resources. You have agility.",
+    choices:[
+      {label:"Double down on your niche — be more specific",sub:"Serve your core customers better than anyone",effect:{sun:1,rain:3,soil:2},type:'great',
+       outcome:"Brilliant positioning. You become the undisputed expert for a specific segment. The competitor's broad approach can't match your depth. NPS climbs to 72.",
+       insight:"Porter's Focus Strategy: dominating a narrow market creates more durable advantages than competing broadly. Apple's premium niche strategy is the classic example.",xp:38},
+      {label:"Match the price cut — protect market share",sub:"Don't let them steal your customers",effect:{sun:-2,rain:1,soil:0},type:'tough',
+       outcome:"Short-term relief, long-term damage. You retain customers but gut your margins. With less to invest in product, the competitor gap widens slowly.",
+       insight:"Price wars destroy value for everyone. Once started, they're hard to exit. Companies that compete on price alone rarely build lasting businesses.",xp:18},
+      {label:"Accelerate roadmap — out-innovate them",sub:"Make their copy irrelevant before launch",effect:{sun:0,rain:1,soil:3},type:'great',
+       outcome:"Bold move. You ship three major features before their launch date. Customers see you as the innovation leader; the competitor looks reactive on arrival.",
+       insight:"Innovation velocity as competitive response is the foundation of the Blue Ocean Strategy — create new value instead of fighting over existing value.",xp:32}
+    ]
+  },
+  {
+    stage:2,phase:'Scaling',
+    q:"You're growing 20% month-over-month. You must choose your scaling strategy.",
+    body:"The tree is established. Now the question isn't survival — it's how fast and in which direction to grow. Three paths emerge simultaneously.",
+    choices:[
+      {label:"Hire aggressively — scale the team first",sub:"Growth requires people; build the org now",effect:{sun:-1,rain:2,soil:2},type:'ok',
+       outcome:"Team growth brings capability but also coordination cost. You hire 12 in 3 months. Culture dilutes slightly. Revenue grows but so does complexity.",
+       insight:"Brooks' Law: adding people to a project can slow it down. High-growth companies often find that culture and process must scale before headcount.",xp:25},
+      {label:"Build systems and playbooks first",sub:"Make the machine before scaling the machine",effect:{sun:1,rain:1,soil:3},type:'great',
+       outcome:"Counter-intuitive genius. You spend 6 weeks documenting everything. Then scaling is dramatically faster. Each hire ramps in 2 weeks instead of 8.",
+       insight:"The E-Myth principle: work ON the business before working IN it. McDonald's scale is built on systems, not individual talent.",xp:40},
+      {label:"Geographic expansion — new markets now",sub:"First mover advantage in new regions",effect:{sun:2,rain:-1,soil:1},type:'ok',
+       outcome:"Mixed results. The new market has different needs you didn't anticipate. You capture some revenue but the core market suffers from divided attention.",
+       insight:"Market expansion before product-market fit solidification is a common scaling mistake. Uber's aggressive global expansion created costly culture and legal problems.",xp:20}
+    ]
+  },
+  {
+    stage:3,phase:'Maturity',
+    q:"You face a genuine innovator's dilemma. A new technology threatens to make your core product obsolete in 3–5 years.",
+    body:"Your mature tree is profitable and beloved. Then a startup demos technology that could fundamentally change how customers get what they need from you.",
+    choices:[
+      {label:"Acquire the startup — own the disruption",sub:"Buy the threat, integrate it, lead the transition",effect:{sun:-2,rain:2,soil:3},type:'great',
+       outcome:"Expensive but visionary. Integration is hard — you nearly lose the founding team. But 18 months later, you're the only incumbent that made the transition.",
+       insight:"Acquire-to-transform is how Google, Facebook, and Apple have repeatedly sidestepped disruption. Instagram, YouTube, and Android were all acquisitions.",xp:42},
+      {label:"Build internal innovation lab — match it in-house",sub:"You have the resources; build your own version",effect:{sun:-1,rain:0,soil:2},type:'ok',
+       outcome:"Slower than acquisition but you retain full control. The lab produces a credible product after 18 months. You're behind, but not fatally so.",
+       insight:"The Innovator's Dilemma (Clayton Christensen) shows most incumbents fail to self-disrupt because their best customers don't want the new thing — yet.",xp:28},
+      {label:"Defend the core — disruption timelines always slip",sub:"Five years is long enough to respond later",effect:{sun:1,rain:0,soil:-2},type:'tough',
+       outcome:"The disruption arrives in 3.5 years, not 5. You're caught defending a shrinking market. Revenue holds 2 years then drops sharply. You scramble.",
+       insight:"Incumbent denial is the most documented pattern in business history: Kodak, Blockbuster, Nokia. The timelines always feel longer than they are.",xp:12}
+    ]
+  },
+  {
+    stage:4,phase:'Legacy',
+    q:"Your empire is established. How do you build it to outlast you?",
+    body:"The forest is full. Customers depend on you. Employees build careers here. The question shifts from how to grow to how to endure.",
+    choices:[
+      {label:"Cultivate the next generation of leaders",sub:"Institutional knowledge must transfer",effect:{sun:0,rain:3,soil:2},type:'great',
+       outcome:"The greatest legacy move. You identify five internal leaders and spend two years developing them. The company runs smoothly through leadership transitions.",
+       insight:"Jim Collins' 'Built to Last' found that enduring companies prioritise leader development over founder dependency. They build clocks, not tell time.",xp:45},
+      {label:"Open source core technology — give back to the ecosystem",sub:"Generosity as long-term competitive strategy",effect:{sun:-1,rain:2,soil:3},type:'great',
+       outcome:"Audacious. The ecosystem grows up around your open technology. You attract the best engineers globally. Competitors who copy it accelerate your standard.",
+       insight:"Ecosystem thinking reframes competition: when you own the platform others build on, competitive dynamics invert. Android, Linux, and AWS are ecosystem-first bets.",xp:45},
+      {label:"Optimise for maximum profitability — harvest mode",sub:"Return value to stakeholders now",effect:{sun:3,rain:-2,soil:-1},type:'ok',
+       outcome:"Financially rational short-term. But talent senses the shift and starts leaving. In 3 years, the business is profitable but hollowing out from the inside.",
+       insight:"Harvest strategies work for finite-life assets, not for organisations with people at their core. Over-extraction destroys the ecosystem that generated the value.",xp:18}
+    ]
+  }
+];
+
+const SCENARIOS_PT = [
+  {
+    stage:0,phase:'Fundação',
+    q:"Antes de plantar, você precisa preparar o terreno. Sua primeira decisão crítica sobre recursos:",
+    body:"Você tem 50 unidades de capital. A janela de mercado está aberta, mas os riscos também. Como você aloca seus recursos iniciais?",
+    choices:[
+      {label:"Investir 80% em produto, 20% de reserva",sub:"Construa o melhor núcleo possível antes do lançamento",effect:{sun:2,rain:0,soil:3},type:'great',
+       outcome:"Raízes sólidas. A qualidade do seu produto atrai os primeiros crentes, que se tornam defensores vocais. A reserva protege quando um fornecedor aumenta os preços.",
+       insight:"A concentração de recursos nos estágios iniciais cria vantagens de qualidade compostas — base da teoria do 'fosso econômico' de Warren Buffett.",xp:35},
+      {label:"Dividir igualmente: produto, marketing, operações",sub:"Equilibrar todos os pilares desde o primeiro dia",effect:{sun:1,rain:2,soil:1},type:'ok',
+       outcome:"Início equilibrado. Nada excepcional, mas nada quebra. Você estabelece presença em todas as dimensões — uma base sólida, se não notável.",
+       insight:"A distribuição uniforme de recursos é a escolha padrão da maioria dos fundadores. É segura — mas raramente produz líderes de categoria. Priorização é uma habilidade estratégica.",xp:22},
+      {label:"Apostar tudo: 100% em entrada rápida no mercado",sub:"Velocidade é a única vantagem que importa agora",effect:{sun:3,rain:-1,soil:-1},type:'tough',
+       outcome:"Entrada rápida, raízes frágeis. Você chega ao mercado rapidamente, mas as lacunas no produto aparecem. A confiança precisa ser reconstruída.",
+       insight:"As vantagens de velocidade se corroem rapidamente sem qualidade subjacente. A metodologia lean defende velocidade — mas com ciclos de aprendizado rápidos.",xp:15}
+    ]
+  },
+  {
+    stage:1,phase:'Crescimento Inicial',
+    q:"Um concorrente entra no seu mercado com um produto similar 30% mais barato. Sua resposta?",
+    body:"Sua muda está crescendo quando um player estabelecido nota sua tração e lança um produto concorrente. Eles têm mais recursos. Você tem agilidade.",
+    choices:[
+      {label:"Aprofundar no nicho — ser mais específico",sub:"Atender seus clientes principais melhor do que ninguém",effect:{sun:1,rain:3,soil:2},type:'great',
+       outcome:"Posicionamento brilhante. Você se torna o especialista indiscutível de um segmento específico. A abordagem ampla do concorrente não consegue igualar sua profundidade.",
+       insight:"Estratégia de Foco de Porter: dominar um mercado estreito cria vantagens mais duráveis do que competir amplamente. A estratégia de nicho premium da Apple é o exemplo clássico.",xp:38},
+      {label:"Igualar o corte de preço — proteger participação de mercado",sub:"Não deixe que roubem seus clientes",effect:{sun:-2,rain:1,soil:0},type:'tough',
+       outcome:"Alívio a curto prazo, dano a longo prazo. Você retém clientes, mas corrói suas margens. Com menos para investir em produto, a diferença para o concorrente cresce.",
+       insight:"Guerras de preços destroem valor para todos. Uma vez iniciadas, são difíceis de sair. Empresas que competem apenas em preço raramente constroem negócios duradouros.",xp:18},
+      {label:"Acelerar o roadmap — superar em inovação",sub:"Torne a cópia deles irrelevante antes do lançamento",effect:{sun:0,rain:1,soil:3},type:'great',
+       outcome:"Movimento audacioso. Você lança três grandes funcionalidades antes da data de lançamento deles. Os clientes veem você como líder de inovação.",
+       insight:"A velocidade de inovação como resposta competitiva é a base da Estratégia do Oceano Azul — crie novo valor em vez de brigar pelo existente.",xp:32}
+    ]
+  },
+  {
+    stage:2,phase:'Escalabilidade',
+    q:"Você está crescendo 20% mês a mês. Você precisa escolher sua estratégia de escala.",
+    body:"A árvore está estabelecida. Agora a questão não é sobrevivência — é quão rápido e em que direção crescer. Três caminhos surgem simultaneamente.",
+    choices:[
+      {label:"Contratar agressivamente — escalar o time primeiro",sub:"Crescimento requer pessoas; construa a organização agora",effect:{sun:-1,rain:2,soil:2},type:'ok',
+       outcome:"O crescimento da equipe traz capacidade, mas também custo de coordenação. Você contrata 12 em 3 meses. A cultura dilui levemente. A receita cresce, mas a complexidade também.",
+       insight:"Lei de Brooks: adicionar pessoas a um projeto pode torná-lo mais lento. Empresas de alto crescimento frequentemente descobrem que cultura e processos devem escalar antes do headcount.",xp:25},
+      {label:"Construir sistemas e playbooks primeiro",sub:"Crie a máquina antes de escalar a máquina",effect:{sun:1,rain:1,soil:3},type:'great',
+       outcome:"Genialidade contraintuitiva. Você passa 6 semanas documentando tudo. Depois, a escalabilidade é dramaticamente mais rápida. Cada contratação integra em 2 semanas em vez de 8.",
+       insight:"O princípio do E-Myth: trabalhe NO negócio antes de trabalhar NO negócio. A escala do McDonald's é construída em sistemas, não em talento individual.",xp:40},
+      {label:"Expansão geográfica — novos mercados agora",sub:"Vantagem de primeiro movimento em novas regiões",effect:{sun:2,rain:-1,soil:1},type:'ok',
+       outcome:"Resultados mistos. O novo mercado tem necessidades diferentes que você não antecipou. Você captura alguma receita, mas o mercado principal sofre com a atenção dividida.",
+       insight:"A expansão de mercado antes da solidificação do product-market fit é um erro comum de escala. A expansão global agressiva do Uber criou problemas caros de cultura e legais.",xp:20}
+    ]
+  },
+  {
+    stage:3,phase:'Maturidade',
+    q:"Você enfrenta um dilema genuíno do inovador. Uma nova tecnologia ameaça tornar seu produto principal obsoleto em 3–5 anos.",
+    body:"Sua árvore madura é lucrativa e amada. Então uma startup apresenta tecnologia que pode mudar fundamentalmente como os clientes obtêm o que precisam de você.",
+    choices:[
+      {label:"Adquirir a startup — apropriar-se da disrupção",sub:"Compre a ameaça, integre, lidere a transição",effect:{sun:-2,rain:2,soil:3},type:'great',
+       outcome:"Caro, mas visionário. A integração é difícil. Mas 18 meses depois, você é o único incumbente que fez a transição com sucesso.",
+       insight:"Adquirir para transformar é como Google, Facebook e Apple evitaram repetidamente a disrupção. Instagram, YouTube e Android foram todas aquisições.",xp:42},
+      {label:"Criar laboratório de inovação interno — replicar internamente",sub:"Você tem os recursos; construa sua própria versão",effect:{sun:-1,rain:0,soil:2},type:'ok',
+       outcome:"Mais lento que uma aquisição, mas você mantém controle total. O laboratório produz um produto credível após 18 meses. Você está atrás, mas não fatalmente.",
+       insight:"O Dilema do Inovador (Clayton Christensen) mostra que a maioria dos incumbentes falha em se autodisruptar porque seus melhores clientes ainda não querem o novo.",xp:28},
+      {label:"Defender o núcleo — os prazos de disrupção sempre atrasam",sub:"Cinco anos é tempo suficiente para responder depois",effect:{sun:1,rain:0,soil:-2},type:'tough',
+       outcome:"A disrupção chega em 3,5 anos, não em 5. Você fica defendendo um mercado encolhendo. A receita mantém por 2 anos e depois cai bruscamente.",
+       insight:"A negação do incumbente é o padrão mais documentado na história dos negócios: Kodak, Blockbuster, Nokia. Os prazos sempre parecem mais longos do que são.",xp:12}
+    ]
+  },
+  {
+    stage:4,phase:'Legado',
+    q:"Seu império está estabelecido. Como você o constrói para durar além de você?",
+    body:"A floresta está cheia. Clientes dependem de você. Funcionários constroem carreiras aqui. A questão passa de como crescer para como perdurar.",
+    choices:[
+      {label:"Cultivar a próxima geração de líderes",sub:"O conhecimento institucional deve ser transferido",effect:{sun:0,rain:3,soil:2},type:'great',
+       outcome:"O maior movimento de legado. Você identifica cinco líderes internos e passa dois anos desenvolvendo-os. A empresa funciona perfeitamente através das transições de liderança.",
+       insight:"'Feitas para Durar' de Jim Collins descobriu que empresas duradouras priorizam o desenvolvimento de líderes sobre a dependência do fundador. Elas constroem relógios, não dizem as horas.",xp:45},
+      {label:"Código aberto da tecnologia principal — retribuir ao ecossistema",sub:"Generosidade como estratégia competitiva de longo prazo",effect:{sun:-1,rain:2,soil:3},type:'great',
+       outcome:"Audacioso. O ecossistema cresce em torno da sua tecnologia aberta. Você atrai os melhores engenheiros globalmente. Concorrentes que copiam aceleram seu padrão.",
+       insight:"O pensamento de ecossistema reformula a competição: quando você possui a plataforma em que outros constroem, as dinâmicas competitivas se invertem. Android, Linux e AWS são apostas ecossistema-primeiro.",xp:45},
+      {label:"Otimizar para lucratividade máxima — modo colheita",sub:"Retornar valor aos stakeholders agora",effect:{sun:3,rain:-2,soil:-1},type:'ok',
+       outcome:"Racionalmente financeiro a curto prazo. Mas o talento percebe a mudança e começa a sair. Em 3 anos, o negócio é lucrativo, mas se esvaziando por dentro.",
+       insight:"Estratégias de colheita funcionam para ativos de vida finita, não para organizações com pessoas em seu núcleo. A extração excessiva destrói o ecossistema que gerou o valor.",xp:18}
+    ]
+  }
+];
+
+const SCENARIOS_IT = [
+  {
+    stage:0,phase:'Fondazione',
+    q:"Prima di piantare, devi preparare il terreno. La tua prima decisione critica sulle risorse:",
+    body:"Hai 50 unità di capitale. La finestra di mercato è aperta, ma anche i rischi. Come allochi le risorse iniziali?",
+    choices:[
+      {label:"Investire l'80% nel prodotto, 20% di riserva",sub:"Costruisci il miglior nucleo possibile prima del lancio",effect:{sun:2,rain:0,soil:3},type:'great',
+       outcome:"Radici solide. La qualità del tuo prodotto attrae i primi credenti che diventano sostenitori vocali. La riserva ti protegge quando un fornitore aumenta i prezzi inaspettatamente.",
+       insight:"La concentrazione di risorse nelle fasi iniziali crea vantaggi di qualità composti — alla base della teoria del 'fossato economico' di Warren Buffett.",xp:35},
+      {label:"Dividere equamente: prodotto, marketing, operazioni",sub:"Equilibrare tutti i pilastri dal primo giorno",effect:{sun:1,rain:2,soil:1},type:'ok',
+       outcome:"Inizio equilibrato. Niente di eccezionale, ma niente si rompe. Stabilisci presenza in tutte le dimensioni — una base solida se non notevole.",
+       insight:"La distribuzione uniforme delle risorse è la scelta predefinita della maggior parte dei fondatori. È sicura — ma raramente produce leader di categoria. La prioritizzazione è un'abilità strategica.",xp:22},
+      {label:"All-in: 100% sull'ingresso rapido nel mercato",sub:"La velocità è l'unico vantaggio che conta ora",effect:{sun:3,rain:-1,soil:-1},type:'tough',
+       outcome:"Entrata rapida, radici sottili. Arrivi al mercato velocemente ma le lacune del prodotto si vedono. La fiducia deve essere ricostruita.",
+       insight:"I vantaggi di velocità si erodono rapidamente senza qualità sottostante. La metodologia lean difende la velocità — ma con cicli di apprendimento rapidi, non imprudenza.",xp:15}
+    ]
+  },
+  {
+    stage:1,phase:'Crescita Iniziale',
+    q:"Un concorrente entra nel tuo mercato con un prodotto simile al 30% in meno. La tua risposta?",
+    body:"Il tuo germoglio sta crescendo quando un player affermato nota la tua trazione e lancia un prodotto concorrente. Hanno più risorse. Tu hai agilità.",
+    choices:[
+      {label:"Puntare sulla nicchia — essere più specifici",sub:"Servi i tuoi clienti principali meglio di chiunque altro",effect:{sun:1,rain:3,soil:2},type:'great',
+       outcome:"Posizionamento brillante. Diventi l'esperto indiscusso per un segmento specifico. L'approccio ampio del concorrente non riesce a eguagliare la tua profondità.",
+       insight:"La Strategia di Focalizzazione di Porter: dominare un mercato ristretto crea vantaggi più duraturi che competere ampiamente. La strategia di nicchia premium di Apple è l'esempio classico.",xp:38},
+      {label:"Eguagliare il taglio di prezzo — proteggere la quota di mercato",sub:"Non lasciare che rubino i tuoi clienti",effect:{sun:-2,rain:1,soil:0},type:'tough',
+       outcome:"Sollievo a breve termine, danno a lungo termine. Mantieni i clienti ma tagli i margini. Con meno da investire nel prodotto, il divario con il concorrente si allarga lentamente.",
+       insight:"Le guerre dei prezzi distruggono valore per tutti. Una volta iniziate, è difficile uscirne. Le aziende che competono solo sul prezzo raramente costruiscono business duraturi.",xp:18},
+      {label:"Accelerare il roadmap — superare nell'innovazione",sub:"Rendi la loro copia irrilevante prima del lancio",effect:{sun:0,rain:1,soil:3},type:'great',
+       outcome:"Mossa audace. Lanci tre funzionalità principali prima della loro data di lancio. I clienti ti vedono come il leader dell'innovazione.",
+       insight:"La velocità di innovazione come risposta competitiva è alla base della Blue Ocean Strategy — creare nuovo valore invece di combattere per quello esistente.",xp:32}
+    ]
+  },
+  {
+    stage:2,phase:'Scalabilità',
+    q:"Stai crescendo del 20% mese su mese. Devi scegliere la tua strategia di scalabilità.",
+    body:"L'albero è consolidato. Ora la questione non è la sopravvivenza — è quanto velocemente e in quale direzione crescere. Tre percorsi emergono simultaneamente.",
+    choices:[
+      {label:"Assumere aggressivamente — scalare il team prima",sub:"La crescita richiede persone; costruisci l'organizzazione ora",effect:{sun:-1,rain:2,soil:2},type:'ok',
+       outcome:"La crescita del team porta capacità ma anche costi di coordinamento. Assumi 12 in 3 mesi. La cultura si diluisce leggermente. I ricavi crescono ma anche la complessità.",
+       insight:"La Legge di Brooks: aggiungere persone a un progetto può rallentarlo. Le aziende ad alta crescita spesso scoprono che cultura e processi devono scalare prima del personale.",xp:25},
+      {label:"Costruire sistemi e playbook prima",sub:"Crea la macchina prima di scalare la macchina",effect:{sun:1,rain:1,soil:3},type:'great',
+       outcome:"Genio controintuitivo. Passi 6 settimane a documentare tutto. Poi la scalabilità è drasticamente più rapida. Ogni assunzione si integra in 2 settimane invece di 8.",
+       insight:"Il principio E-Myth: lavora SUL business prima di lavorare NEL business. La scalabilità di McDonald's è costruita su sistemi, non su talento individuale.",xp:40},
+      {label:"Espansione geografica — nuovi mercati ora",sub:"Vantaggio del primo entrante in nuove regioni",effect:{sun:2,rain:-1,soil:1},type:'ok',
+       outcome:"Risultati misti. Il nuovo mercato ha esigenze diverse che non avevi anticipato. Catturi qualche ricavo ma il mercato principale soffre per l'attenzione divisa.",
+       insight:"L'espansione del mercato prima del consolidamento del product-market fit è un errore comune di scalabilità. L'espansione globale aggressiva di Uber ha creato costosi problemi di cultura e legali.",xp:20}
+    ]
+  },
+  {
+    stage:3,phase:'Maturità',
+    q:"Affronti un genuino dilemma dell'innovatore. Una nuova tecnologia minaccia di rendere obsoleto il tuo prodotto principale in 3–5 anni.",
+    body:"Il tuo albero maturo è redditizio e amato. Poi una startup presenta una tecnologia che potrebbe cambiare fondamentalmente il modo in cui i clienti ottengono ciò di cui hanno bisogno da te.",
+    choices:[
+      {label:"Acquisire la startup — appropriarsi della disruption",sub:"Compra la minaccia, integrala, guida la transizione",effect:{sun:-2,rain:2,soil:3},type:'great',
+       outcome:"Costoso ma visionario. L'integrazione è difficile. Ma 18 mesi dopo, sei l'unico incumbent che ha completato la transizione con successo.",
+       insight:"Acquisire per trasformare è come Google, Facebook e Apple hanno ripetutamente evitato la disruption. Instagram, YouTube e Android erano tutte acquisizioni.",xp:42},
+      {label:"Creare laboratorio di innovazione interno",sub:"Hai le risorse; costruisci la tua versione in-house",effect:{sun:-1,rain:0,soil:2},type:'ok',
+       outcome:"Più lento dell'acquisizione ma mantieni pieno controllo. Il laboratorio produce un prodotto credibile dopo 18 mesi. Sei indietro, ma non in modo fatale.",
+       insight:"Il Dilemma dell'Innovatore (Clayton Christensen) mostra che la maggior parte degli incumbent fallisce nell'auto-disruptarsi perché i loro migliori clienti non vogliono ancora la novità.",xp:28},
+      {label:"Difendere il nucleo — le tempistiche di disruption slittano sempre",sub:"Cinque anni sono abbastanza per rispondere dopo",effect:{sun:1,rain:0,soil:-2},type:'tough',
+       outcome:"La disruption arriva in 3,5 anni, non 5. Ti ritrovi a difendere un mercato in contrazione. I ricavi reggono 2 anni poi calano bruscamente.",
+       insight:"Il diniego dell'incumbent è il pattern più documentato nella storia aziendale: Kodak, Blockbuster, Nokia. Le tempistiche sembrano sempre più lunghe di quanto siano.",xp:12}
+    ]
+  },
+  {
+    stage:4,phase:'Eredità',
+    q:"Il tuo impero è consolidato. Come lo costruisci per sopravviverti?",
+    body:"La foresta è piena. I clienti dipendono da te. I dipendenti costruiscono carriere qui. La domanda passa da come crescere a come perdurare.",
+    choices:[
+      {label:"Coltivare la prossima generazione di leader",sub:"Il know-how istituzionale deve trasferirsi",effect:{sun:0,rain:3,soil:2},type:'great',
+       outcome:"La mossa di eredità più grande. Identifichi cinque leader interni e passi due anni a svilupparli. L'azienda funziona perfettamente attraverso le transizioni di leadership.",
+       insight:"'Built to Last' di Jim Collins ha scoperto che le aziende durature privilegiano lo sviluppo dei leader rispetto alla dipendenza dal fondatore. Costruiscono orologi, non dicono l'ora.",xp:45},
+      {label:"Open source della tecnologia core — restituire all'ecosistema",sub:"La generosità come strategia competitiva a lungo termine",effect:{sun:-1,rain:2,soil:3},type:'great',
+       outcome:"Audace. L'ecosistema cresce attorno alla tua tecnologia aperta. Attrai i migliori ingegneri globalmente. I concorrenti che la copiano accelerano il tuo standard.",
+       insight:"Il pensiero ecosistemico ridefinisce la concorrenza: quando possiedi la piattaforma su cui gli altri costruiscono, le dinamiche competitive si invertono. Android, Linux e AWS sono scommesse ecosistema-first.",xp:45},
+      {label:"Ottimizzare per massima redditività — modalità raccolto",sub:"Restituire valore agli stakeholder ora",effect:{sun:3,rain:-2,soil:-1},type:'ok',
+       outcome:"Finanziariamente razionale a breve termine. Ma i talenti percepiscono il cambiamento e iniziano ad andarsene. In 3 anni, il business è redditizio ma si sta svuotando dall'interno.",
+       insight:"Le strategie di raccolta funzionano per asset a vita finita, non per organizzazioni con persone al loro nucleo. L'estrazione eccessiva distrugge l'ecosistema che ha generato il valore.",xp:18}
+    ]
+  }
+];
+
+function getScenarios(){
+  if(lang==='pt') return SCENARIOS_PT;
+  if(lang==='it') return SCENARIOS_IT;
+  return SCENARIOS_EN;
+}
+
+/* ==================== TREES ==================== */
+function getTreeData(){
+  const names={
+    en:{oak:'Oak',bamboo:'Bamboo',fruit:'Fruit Tree'},
+    pt:{oak:'Carvalho',bamboo:'Bambu',fruit:'Árvore Frutífera'},
+    it:{oak:'Quercia',bamboo:'Bambù',fruit:'Albero da Frutto'}
+  };
+  return {
+    oak:{name:names[lang].oak,trait:t('oak_trait'),desc:t('oak_desc'),color:'#2D6A4F'},
+    bamboo:{name:names[lang].bamboo,trait:t('bamboo_trait'),desc:t('bamboo_desc'),color:'#52B788'},
+    fruit:{name:names[lang].fruit,trait:t('fruit_trait'),desc:t('fruit_desc'),color:'#E07A5F'}
+  };
+}
+
+/* === SVG TREES — richly detailed === */
+function treeSVG(type, stage, size='full'){
+  const s = size==='full' ? 1 : 0.55;
+  const w = Math.round(160*s), h = Math.round(200*s);
+
+  if(type==='oak'){
+    const configs=[
+      // Stage 0: Seed/sprout
+      `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+        <line x1="80" y1="190" x2="80" y2="155" stroke="#8B6547" stroke-width="5" stroke-linecap="round"/>
+        <ellipse cx="80" cy="145" rx="16" ry="12" fill="#4CAF7D" opacity="0.9"/>
+        <ellipse cx="68" cy="152" rx="10" ry="7" fill="#66BB8A" opacity="0.8" transform="rotate(-20,68,152)"/>
+        <ellipse cx="92" cy="152" rx="10" ry="7" fill="#66BB8A" opacity="0.8" transform="rotate(20,92,152)"/>
+      </svg>`,
+      // Stage 1: Sapling
+      `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+        <rect x="76" y="145" width="8" height="50" rx="4" fill="#8B6547"/>
+        <line x1="80" y1="172" x2="58" y2="158" stroke="#8B6547" stroke-width="4" stroke-linecap="round"/>
+        <line x1="80" y1="165" x2="102" y2="153" stroke="#8B6547" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="80" cy="118" rx="28" ry="22" fill="#2D6A4F"/>
+        <ellipse cx="58" cy="130" rx="18" ry="14" fill="#3D8B5E" opacity="0.85"/>
+        <ellipse cx="102" cy="128" rx="18" ry="14" fill="#3D8B5E" opacity="0.85"/>
+        <ellipse cx="80" cy="102" rx="20" ry="16" fill="#52B788" opacity="0.7"/>
+      </svg>`,
+      // Stage 2: Established
+      `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+        <rect x="74" y="130" width="12" height="65" rx="6" fill="#7B5230"/>
+        <line x1="80" y1="158" x2="48" y2="140" stroke="#7B5230" stroke-width="6" stroke-linecap="round"/>
+        <line x1="80" y1="150" x2="112" y2="134" stroke="#7B5230" stroke-width="6" stroke-linecap="round"/>
+        <ellipse cx="80" cy="100" rx="42" ry="32" fill="#1E5C3A"/>
+        <ellipse cx="48" cy="118" rx="26" ry="20" fill="#2D6A4F" opacity="0.9"/>
+        <ellipse cx="112" cy="115" rx="26" ry="20" fill="#2D6A4F" opacity="0.9"/>
+        <ellipse cx="80" cy="80" rx="30" ry="24" fill="#3D8B5E"/>
+        <ellipse cx="60" cy="88" rx="18" ry="14" fill="#52B788" opacity="0.75"/>
+        <ellipse cx="100" cy="86" rx="18" ry="14" fill="#52B788" opacity="0.75"/>
+        <ellipse cx="80" cy="62" rx="20" ry="16" fill="#4CAF7D" opacity="0.6"/>
+      </svg>`,
+      // Stage 3: Mature
+      `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+        <rect x="72" y="115" width="16" height="80" rx="8" fill="#6B4226"/>
+        <line x1="80" y1="148" x2="36" y2="126" stroke="#6B4226" stroke-width="8" stroke-linecap="round"/>
+        <line x1="80" y1="138" x2="124" y2="118" stroke="#6B4226" stroke-width="8" stroke-linecap="round"/>
+        <line x1="80" y1="168" x2="48" y2="188" stroke="#6B4226" stroke-width="5" stroke-linecap="round"/>
+        <line x1="80" y1="168" x2="112" y2="186" stroke="#6B4226" stroke-width="5" stroke-linecap="round"/>
+        <ellipse cx="80" cy="78" rx="55" ry="40" fill="#1A4731"/>
+        <ellipse cx="36" cy="100" rx="32" ry="24" fill="#2D6A4F" opacity="0.9"/>
+        <ellipse cx="124" cy="96" rx="32" ry="24" fill="#2D6A4F" opacity="0.9"/>
+        <ellipse cx="80" cy="58" rx="38" ry="28" fill="#3D8B5E"/>
+        <ellipse cx="54" cy="70" rx="24" ry="18" fill="#52B788" opacity="0.8"/>
+        <ellipse cx="106" cy="68" rx="24" ry="18" fill="#52B788" opacity="0.8"/>
+        <ellipse cx="80" cy="38" rx="26" ry="20" fill="#66BB8A" opacity="0.7"/>
+        <ellipse cx="80" cy="24" rx="16" ry="12" fill="#81C784" opacity="0.5"/>
+      </svg>`,
+      // Stage 4: Legacy
+      `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+        <rect x="70" y="100" width="20" height="95" rx="10" fill="#5C3D2E"/>
+        <line x1="80" y1="135" x2="28" y2="108" stroke="#5C3D2E" stroke-width="10" stroke-linecap="round"/>
+        <line x1="80" y1="122" x2="132" y2="97" stroke="#5C3D2E" stroke-width="10" stroke-linecap="round"/>
+        <line x1="80" y1="158" x2="40" y2="182" stroke="#5C3D2E" stroke-width="6" stroke-linecap="round"/>
+        <line x1="80" y1="158" x2="120" y2="180" stroke="#5C3D2E" stroke-width="6" stroke-linecap="round"/>
+        <line x1="28" y1="108" x2="10" y2="130" stroke="#5C3D2E" stroke-width="5" stroke-linecap="round"/>
+        <line x1="132" y1="97" x2="150" y2="118" stroke="#5C3D2E" stroke-width="5" stroke-linecap="round"/>
+        <ellipse cx="80" cy="60" rx="66" ry="46" fill="#0D3320"/>
+        <ellipse cx="28" cy="88" rx="36" ry="26" fill="#1A4731" opacity="0.95"/>
+        <ellipse cx="132" cy="82" rx="36" ry="26" fill="#1A4731" opacity="0.95"/>
+        <ellipse cx="80" cy="42" rx="46" ry="32" fill="#2D6A4F"/>
+        <ellipse cx="50" cy="56" rx="30" ry="22" fill="#3D8B5E" opacity="0.85"/>
+        <ellipse cx="110" cy="52" rx="30" ry="22" fill="#3D8B5E" opacity="0.85"/>
+        <ellipse cx="80" cy="22" rx="30" ry="20" fill="#52B788" opacity="0.8"/>
+        <ellipse cx="80" cy="10" rx="18" ry="12" fill="#66BB8A" opacity="0.6"/>
+      </svg>`
+    ];
+    return configs[Math.min(stage,4)].replace('width="160"',`width="${w}"`).replace('height="200"',`height="${h}"`);
+  }
+
+  if(type==='bamboo'){
+    const configs=[
+      `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+        <rect x="78" y="162" width="7" height="35" rx="3" fill="#52B788"/>
+        <rect x="78" y="168" width="7" height="3" rx="1" fill="#3D9970"/>
+        <ellipse cx="81" cy="155" rx="12" ry="6" fill="#66BB8A" opacity="0.9" transform="rotate(-8,81,155)"/>
+        <ellipse cx="76" cy="161" rx="9" ry="5" fill="#81C784" opacity="0.7" transform="rotate(15,76,161)"/>
+      </svg>`,
+      `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+        <rect x="76" y="120" width="7" height="75" rx="3" fill="#52B788"/>
+        <rect x="86" y="135" width="6" height="62" rx="3" fill="#7EC8A4"/>
+        <rect x="76" y="130" width="7" height="4" rx="2" fill="#3D9970"/>
+        <rect x="76" y="148" width="7" height="4" rx="2" fill="#3D9970"/>
+        <rect x="86" y="145" width="6" height="3" rx="1" fill="#2D8060"/>
+        <ellipse cx="79" cy="108" rx="16" ry="7" fill="#52B788" opacity="0.9" transform="rotate(-10,79,108)"/>
+        <ellipse cx="90" cy="122" rx="12" ry="6" fill="#7EC8A4" opacity="0.8" transform="rotate(8,90,122)"/>
+        <ellipse cx="72" cy="118" rx="10" ry="5" fill="#66BB8A" opacity="0.7" transform="rotate(-15,72,118)"/>
+      </svg>`,
+      `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+        <rect x="68" y="98" width="8" height="97" rx="4" fill="#3D9970"/>
+        <rect x="79" y="82" width="8" height="113" rx="4" fill="#52B788"/>
+        <rect x="90" y="105" width="7" height="90" rx="3" fill="#7EC8A4"/>
+        <rect x="68" y="108" width="8" height="4" rx="2" fill="#2D8060"/>
+        <rect x="68" y="128" width="8" height="4" rx="2" fill="#2D8060"/>
+        <rect x="79" y="94" width="8" height="4" rx="2" fill="#3D9970"/>
+        <rect x="79" y="116" width="8" height="4" rx="2" fill="#3D9970"/>
+        <rect x="90" y="118" width="7" height="3" rx="1" fill="#2D8060"/>
+        <ellipse cx="70" cy="86" rx="18" ry="8" fill="#3D9970" opacity="0.85" transform="rotate(-12,70,86)"/>
+        <ellipse cx="82" cy="68" rx="18" ry="7" fill="#52B788" opacity="0.9" transform="rotate(6,82,68)"/>
+        <ellipse cx="92" cy="92" rx="15" ry="6" fill="#7EC8A4" opacity="0.8" transform="rotate(14,92,92)"/>
+        <ellipse cx="62" cy="96" rx="12" ry="5" fill="#66BB8A" opacity="0.7" transform="rotate(-20,62,96)"/>
+      </svg>`,
+      `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+        <rect x="58" y="85" width="8" height="110" rx="4" fill="#2D8060"/>
+        <rect x="70" y="68" width="9" height="127" rx="4" fill="#3D9970"/>
+        <rect x="82" y="55" width="9" height="140" rx="4" fill="#52B788"/>
+        <rect x="94" y="75" width="8" height="120" rx="4" fill="#7EC8A4"/>
+        <rect x="105" y="92" width="7" height="103" rx="3" fill="#52B788" opacity="0.7"/>
+        <rect x="58" y="98" width="8" height="4" rx="2" fill="#1A5C42"/>
+        <rect x="58" y="120" width="8" height="4" rx="2" fill="#1A5C42"/>
+        <rect x="70" y="82" width="9" height="4" rx="2" fill="#2D8060"/>
+        <rect x="70" y="106" width="9" height="4" rx="2" fill="#2D8060"/>
+        <rect x="82" y="68" width="9" height="4" rx="2" fill="#3D9970"/>
+        <rect x="82" y="92" width="9" height="4" rx="2" fill="#3D9970"/>
+        <ellipse cx="60" cy="72" rx="20" ry="8" fill="#2D8060" opacity="0.9" transform="rotate(-15,60,72)"/>
+        <ellipse cx="73" cy="54" rx="20" ry="8" fill="#3D9970" opacity="0.9" transform="rotate(-6,73,54)"/>
+        <ellipse cx="85" cy="40" rx="22" ry="9" fill="#52B788" opacity="0.9" transform="rotate(4,85,40)"/>
+        <ellipse cx="96" cy="60" rx="18" ry="7" fill="#7EC8A4" opacity="0.8" transform="rotate(14,96,60)"/>
+        <ellipse cx="107" cy="78" rx="14" ry="6" fill="#52B788" opacity="0.7" transform="rotate(22,107,78)"/>
+        <ellipse cx="50" cy="82" rx="14" ry="6" fill="#66BB8A" opacity="0.65" transform="rotate(-25,50,82)"/>
+      </svg>`,
+      `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+        <rect x="44" y="88" width="8" height="108" rx="4" fill="#1A5C42" opacity="0.8"/>
+        <rect x="56" y="72" width="9" height="123" rx="4" fill="#2D8060"/>
+        <rect x="68" y="55" width="9" height="140" rx="4" fill="#3D9970"/>
+        <rect x="80" y="42" width="10" height="153" rx="5" fill="#52B788"/>
+        <rect x="92" y="60" width="9" height="135" rx="4" fill="#66BB8A"/>
+        <rect x="104" y="78" width="9" height="117" rx="4" fill="#7EC8A4"/>
+        <rect x="116" y="96" width="7" height="100" rx="3" fill="#52B788" opacity="0.6"/>
+        <ellipse cx="46" cy="76" rx="18" ry="7" fill="#1A5C42" opacity="0.8" transform="rotate(-20,46,76)"/>
+        <ellipse cx="58" cy="58" rx="20" ry="8" fill="#2D8060" opacity="0.9" transform="rotate(-12,58,58)"/>
+        <ellipse cx="70" cy="40" rx="22" ry="9" fill="#3D9970" opacity="0.9" transform="rotate(-4,70,40)"/>
+        <ellipse cx="82" cy="26" rx="24" ry="10" fill="#52B788" opacity="0.9" transform="rotate(3,82,26)"/>
+        <ellipse cx="94" cy="44" rx="20" ry="8" fill="#66BB8A" opacity="0.85" transform="rotate(12,94,44)"/>
+        <ellipse cx="106" cy="62" rx="18" ry="7" fill="#7EC8A4" opacity="0.8" transform="rotate(20,106,62)"/>
+        <ellipse cx="118" cy="82" rx="14" ry="6" fill="#52B788" opacity="0.65" transform="rotate(28,118,82)"/>
+        <ellipse cx="36" cy="90" rx="12" ry="5" fill="#66BB8A" opacity="0.5" transform="rotate(-30,36,90)"/>
+      </svg>`
+    ];
+    return configs[Math.min(stage,4)].replace('width="160"',`width="${w}"`).replace('height="200"',`height="${h}"`);
+  }
+
+  // fruit
+  const configs=[
+    `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+      <rect x="78" y="162" width="6" height="34" rx="3" fill="#8B6547"/>
+      <circle cx="81" cy="148" r="16" fill="#6AAB3A"/>
+      <circle cx="81" cy="148" r="16" fill="none" stroke="#5A9A2A" stroke-width="1" opacity="0.5"/>
+    </svg>`,
+    `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+      <rect x="76" y="140" width="8" height="55" rx="4" fill="#8B6547"/>
+      <circle cx="80" cy="115" r="28" fill="#6AAB3A"/>
+      <circle cx="80" cy="115" r="28" fill="none" stroke="#5A9A2A" stroke-width="2" opacity="0.4"/>
+      <circle cx="66" cy="124" r="9" fill="#D62828"/>
+      <circle cx="80" cy="130" r="8" fill="#E53935" opacity="0.85"/>
+      <circle cx="94" cy="122" r="7" fill="#D62828" opacity="0.9"/>
+      <circle cx="72" cy="108" r="5" fill="#EF5350" opacity="0.6"/>
+    </svg>`,
+    `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+      <rect x="74" y="125" width="10" height="70" rx="5" fill="#7B5230"/>
+      <line x1="79" y1="148" x2="54" y2="134" stroke="#7B5230" stroke-width="6" stroke-linecap="round"/>
+      <line x1="79" y1="142" x2="104" y2="130" stroke="#7B5230" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="79" cy="90" r="40" fill="#5A9A2A"/>
+      <circle cx="79" cy="90" r="40" fill="none" stroke="#4A8A1A" stroke-width="2" opacity="0.3"/>
+      <circle cx="60" cy="102" r="11" fill="#C62828"/>
+      <circle cx="82" cy="110" r="10" fill="#D62828" opacity="0.9"/>
+      <circle cx="98" cy="100" r="10" fill="#C62828" opacity="0.85"/>
+      <circle cx="68" cy="88" r="9" fill="#E53935" opacity="0.8"/>
+      <circle cx="90" cy="82" r="9" fill="#D62828" opacity="0.75"/>
+      <circle cx="72" cy="116" r="7" fill="#EF5350" opacity="0.7"/>
+      <circle cx="60" cy="78" r="7" fill="#D62828" opacity="0.6"/>
+    </svg>`,
+    `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+      <rect x="72" y="108" width="14" height="87" rx="7" fill="#6B4226"/>
+      <line x1="79" y1="138" x2="36" y2="115" stroke="#6B4226" stroke-width="9" stroke-linecap="round"/>
+      <line x1="79" y1="128" x2="122" y2="107" stroke="#6B4226" stroke-width="9" stroke-linecap="round"/>
+      <line x1="36" y1="115" x2="16" y2="136" stroke="#6B4226" stroke-width="5" stroke-linecap="round"/>
+      <line x1="122" y1="107" x2="144" y2="126" stroke="#6B4226" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="79" cy="68" r="50" fill="#4A8A1A"/>
+      <circle cx="79" cy="68" r="50" fill="none" stroke="#3A7A0A" stroke-width="2" opacity="0.3"/>
+      <circle cx="54" cy="82" r="13" fill="#B71C1C"/>
+      <circle cx="78" cy="92" r="12" fill="#C62828" opacity="0.95"/>
+      <circle cx="100" cy="80" r="12" fill="#B71C1C" opacity="0.9"/>
+      <circle cx="62" cy="66" r="11" fill="#D62828" opacity="0.85"/>
+      <circle cx="90" cy="58" r="11" fill="#C62828" opacity="0.8"/>
+      <circle cx="40" cy="68" r="10" fill="#D62828" opacity="0.75"/>
+      <circle cx="112" cy="66" r="10" fill="#B71C1C" opacity="0.75"/>
+      <circle cx="70" cy="50" r="9" fill="#EF5350" opacity="0.7"/>
+      <circle cx="96" cy="76" r="8" fill="#E53935" opacity="0.65"/>
+      <circle cx="56" cy="96" r="7" fill="#C62828" opacity="0.6"/>
+    </svg>`,
+    `<svg width="${w}" height="${h}" viewBox="0 0 160 200">
+      <rect x="70" y="96" width="18" height="99" rx="9" fill="#5C3D2E"/>
+      <line x1="79" y1="128" x2="24" y2="100" stroke="#5C3D2E" stroke-width="12" stroke-linecap="round"/>
+      <line x1="79" y1="116" x2="134" y2="90" stroke="#5C3D2E" stroke-width="12" stroke-linecap="round"/>
+      <line x1="24" y1="100" x2="6" y2="126" stroke="#5C3D2E" stroke-width="7" stroke-linecap="round"/>
+      <line x1="134" y1="90" x2="154" y2="114" stroke="#5C3D2E" stroke-width="7" stroke-linecap="round"/>
+      <line x1="79" y1="152" x2="44" y2="178" stroke="#5C3D2E" stroke-width="6" stroke-linecap="round"/>
+      <line x1="79" y1="152" x2="114" y2="176" stroke="#5C3D2E" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="79" cy="52" r="58" fill="#3A7A0A"/>
+      <circle cx="79" cy="52" r="58" fill="none" stroke="#2A6A00" stroke-width="2" opacity="0.4"/>
+      <circle cx="50" cy="68" r="14" fill="#A00000"/>
+      <circle cx="76" cy="80" r="14" fill="#B71C1C" opacity="0.95"/>
+      <circle cx="102" cy="68" r="13" fill="#A00000" opacity="0.9"/>
+      <circle cx="58" cy="50" r="13" fill="#C62828" opacity="0.85"/>
+      <circle cx="92" cy="40" r="13" fill="#B71C1C" opacity="0.85"/>
+      <circle cx="32" cy="60" r="12" fill="#C62828" opacity="0.8"/>
+      <circle cx="120" cy="56" r="12" fill="#A00000" opacity="0.8"/>
+      <circle cx="68" cy="32" r="11" fill="#D62828" opacity="0.75"/>
+      <circle cx="96" cy="62" r="11" fill="#E53935" opacity="0.7"/>
+      <circle cx="48" cy="80" r="10" fill="#B71C1C" opacity="0.65"/>
+      <circle cx="108" cy="80" r="10" fill="#C62828" opacity="0.65"/>
+      <circle cx="80" cy="16" r="9" fill="#EF5350" opacity="0.55"/>
+    </svg>`
+  ];
+  return configs[Math.min(stage,4)].replace('width="160"',`width="${w}"`).replace('height="200"',`height="${h}"`);
+}
+
+/* ==================== GAME STATE ==================== */
+let gs={
+  screen:'intro',
+  treeType:null,
+  stageIdx:0,
+  scenarioIdx:0,
+  metrics:{sun:5,rain:5,soil:5},
+  prevMetrics:{sun:5,rain:5,soil:5},
+  xp:0,
+  totalXP:0,
+  phase:'choosing',
+  lastChoice:null,
+  forest:[],
+  XP_PER_STAGE:100
+};
+
+function clamp(v){return Math.max(0,Math.min(10,Math.round(v)))}
+function applyEffect(e){
+  gs.prevMetrics={...gs.metrics};
+  gs.metrics.sun=clamp(gs.metrics.sun+e.sun);
+  gs.metrics.rain=clamp(gs.metrics.rain+e.rain);
+  gs.metrics.soil=clamp(gs.metrics.soil+e.soil);
+}
+
+function getRank(){
+  const avg=(gs.metrics.sun+gs.metrics.rain+gs.metrics.soil)/3;
+  const ranks=t('ranks');
+  if(avg>=8) return ranks[3];
+  if(avg>=6) return ranks[2];
+  if(avg>=4) return ranks[1];
+  return ranks[0];
+}
+
+/* ==================== RENDER ==================== */
+function render(){
+  const el=document.getElementById('root');
+  if(gs.screen==='intro') el.innerHTML=renderIntro();
+  else if(gs.screen==='game') el.innerHTML=renderGame();
+  else el.innerHTML=renderScore();
+}
+
+function renderIntro(){
+  const trees=getTreeData();
+  return `
+  <p class="intro-text">${t('intro_text')}</p>
+  <p style="font-size:12px;text-align:center;color:var(--bark-light);letter-spacing:0.06em;margin-bottom:10px;text-transform:uppercase;font-weight:500">${t('choose_tree')}</p>
+  <div class="tree-grid">
+    ${Object.entries(trees).map(([k,tr])=>`
+      <div class="tree-card ${gs.treeType===k?'active':''}" onclick="selectTree('${k}')">
+        <div class="tree-svg-preview">${treeSVG(k,gs.treeType===k?2:1,'small')}</div>
+        <div class="tree-name">${tr.name}</div>
+        <div class="tree-trait">${tr.trait}</div>
+      </div>`).join('')}
+  </div>
+  ${gs.treeType?`<p class="tree-desc">${trees[gs.treeType].desc}</p>`:''}
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="startGame()" ${!gs.treeType?'disabled':''} style="width:100%">${t('plant_seed')}</button>
+  </div>`;
+}
+
+function metricDelta(key){
+  const d=gs.metrics[key]-gs.prevMetrics[key];
+  if(d>0) return `<span style="color:#2D6A4F;font-size:11px;font-weight:500"> +${d}</span>`;
+  if(d<0) return `<span style="color:#C62828;font-size:11px;font-weight:500"> ${d}</span>`;
+  return '';
+}
+
+function renderStats(pulseKey){
+  const icons={sun:'☀️',rain:'💧',soil:'🌍'};
+  const labels={sun:t('resources'),rain:t('trust'),soil:t('strategy')};
+  const fillClass={sun:'fill-sun',rain:'fill-rain',soil:'fill-soil'};
+  return `<div class="stats-row">
+    ${['sun','rain','soil'].map(k=>`
+      <div class="stat-card ${pulseKey===k?'pulse':''}">
+        <div class="stat-header"><span class="stat-icon">${icons[k]}</span><span class="stat-name">${labels[k]}</span></div>
+        <div class="stat-val">${gs.metrics[k]}${pulseKey?metricDelta(k):''}</div>
+        <div class="stat-bar"><div class="stat-fill ${fillClass[k]}" style="width:${gs.metrics[k]*10}%"></div></div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function renderGame(){
+  const sc=getScenarios()[gs.scenarioIdx];
+  const stages=t('stages');
+  const stageLabel=stages[gs.stageIdx]||stages[stages.length-1];
+  const pct=Math.min(100,Math.round((gs.xp/gs.XP_PER_STAGE)*100));
+  const level=gs.stageIdx+1;
+  const treeData=getTreeData();
+
+  let html=`
+  <div class="stage-scene">
+    <div class="scene-sky"></div>
+    <div class="scene-clouds"><div class="cloud"></div><div class="cloud"></div><div class="cloud"></div></div>
+    <div class="scene-tree">${treeSVG(gs.treeType,gs.stageIdx,'full')}</div>
+    <div class="scene-ground"></div>
+    <div class="stage-badge">${stageLabel}</div>
+    <div class="level-badge">${t('level')} ${level}</div>
+  </div>
+  <div class="xp-row">
+    <div class="xp-labels"><span>${t('stage_progress')}</span><span>${gs.xp}/${gs.XP_PER_STAGE} XP</span></div>
+    <div class="xp-track"><div class="xp-fill" style="width:${pct}%"></div></div>
+  </div>
+  ${renderStats(gs.phase==='outcome'?'sun':null)}`;
+
+  if(gs.phase==='choosing'){
+    html+=`
+    <div class="scenario-card">
+      <div class="scenario-phase">${sc.phase} · ${stageLabel}</div>
+      <div class="scenario-q">${sc.q}</div>
+      <div class="scenario-body">${sc.body}</div>
+    </div>
+    <div class="choices">
+      ${sc.choices.map((c,i)=>`
+        <div class="choice" onclick="choose(${i})">
+          <div class="choice-label">${c.label}</div>
+          <div class="choice-sub">${c.sub}</div>
+        </div>`).join('')}
+    </div>
+    ${buildTipPanel(gs.scenarioIdx)}`;
+  } else {
+    const c=gs.lastChoice;
+    const deltas=[
+      {k:'sun',v:c.effect.sun,icon:'☀️'},{k:'rain',v:c.effect.rain,icon:'💧'},{k:'soil',v:c.effect.soil,icon:'🌍'}
+    ];
+    html+=`<div class="outcome-wrap">
+    <div class="outcome-banner outcome-${c.type}">
+      <div class="outcome-title">${t('you_chose')} ${c.label}</div>
+      ${c.outcome}
+    </div>
+    <div class="insight-card">
+      <div class="insight-leaf">🌱</div>
+      <div class="insight-label">${t('root_insight')}</div>
+      <div class="insight-text">${c.insight}</div>
+    </div>
+    <div class="delta-row">
+      ${deltas.map(d=>`<span class="delta ${d.v>0?'d-up':d.v<0?'d-down':'d-zero'}">${d.icon} ${d.v>0?'+':''}${d.v}</span>`).join('')}
+      <span class="delta d-xp">+${c.xp} XP</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="nextStage()">${gs.scenarioIdx>=getScenarios().length-1?'View your results →':t('continue')}</button>
+    </div>
+    ${buildOutcomeTipPanel(gs.scenarioIdx)}
+    </div>`;
+  }
+
+  if(gs.forest.length>0){
+    const treeEmojis={oak:'🌳',bamboo:'🎋',fruit:'🍊'};
+    const treeLabel=gs.forest.length===1?t('trees_label')[0]:t('trees_label')[1];
+    html+=`<div class="forest-section">
+      <div class="forest-title">${t('your_forest')} (${gs.forest.length} ${treeLabel})</div>
+      <div class="forest-ground">
+        ${gs.forest.map((tp,i)=>`<div class="forest-tree-item" style="animation-delay:${i*0.12}s">${treeSVG(tp,4,'small')}</div>`).join('')}
+      </div>
+    </div>`;
+  }
+  return html;
+}
+
+function renderScore(){
+  const treeData=getTreeData();
+  const treeEmojis={oak:'🌳',bamboo:'🎋',fruit:'🍊'};
+  const rank=getRank();
+  const avg=Math.round((gs.metrics.sun+gs.metrics.rain+gs.metrics.soil)/3*10);
+  const scoreLabels=t('score_labels');
+  const treeLabel=gs.forest.length===1?t('trees_label')[0]:t('trees_label')[1];
+
+  return `<div class="score-screen">
+  <div class="score-hero">
+    <div class="score-tree-big">${treeSVG(gs.treeType,4,'full')}</div>
+    <div class="score-rank">${rank}</div>
+    <div class="score-xp">${gs.totalXP} ${t('total_xp')}</div>
+  </div>
+  <div class="medals-row">
+    <div class="medal-card"><span class="medal-icon">☀️</span><div class="medal-val">${gs.metrics.sun}/10</div><div class="medal-label">${scoreLabels.resources}</div></div>
+    <div class="medal-card"><span class="medal-icon">💧</span><div class="medal-val">${gs.metrics.rain}/10</div><div class="medal-label">${scoreLabels.trust}</div></div>
+    <div class="medal-card"><span class="medal-icon">🌍</span><div class="medal-val">${gs.metrics.soil}/10</div><div class="medal-label">${scoreLabels.strategy}</div></div>
+  </div>
+  <div class="forest-section" style="margin-bottom:1.25rem">
+    <div class="forest-title">${t('your_forest')} (${gs.forest.length} ${treeLabel})</div>
+    <div class="forest-ground">
+      ${gs.forest.map((tp,i)=>`<div class="forest-tree-item" style="animation-delay:${i*0.12}s">${treeSVG(tp,4,'small')}</div>`).join('')}
+    </div>
+  </div>
+  ${buildScoreReflections()}
+  <div class="btn-row" style="justify-content:center">
+    <button class="btn btn-primary" onclick="plantAnother()">${t('play_again')}</button>
+  </div></div>`;
+}
+
+/* ==================== ACTIONS ==================== */
+function selectTree(type){gs.treeType=type;render();}
+
+function startGame(){
+  if(!gs.treeType) return;
+  gs.screen='game';gs.stageIdx=0;gs.scenarioIdx=0;
+  gs.metrics={sun:5,rain:5,soil:5};gs.prevMetrics={sun:5,rain:5,soil:5};
+  gs.xp=0;gs.phase='choosing';gs.lastChoice=null;
+  render();
+}
+
+function choose(i){
+  const sc=getScenarios()[gs.scenarioIdx];
+  const c=sc.choices[i];
+  applyEffect(c.effect);
+  gs.xp=Math.min(gs.xp+c.xp, gs.XP_PER_STAGE);
+  gs.totalXP+=c.xp;
+  gs.lastChoice=c;
+  gs.phase='outcome';
+  render();
+  // pulse effect on stat cards
+  setTimeout(()=>{
+    document.querySelectorAll('.stat-card').forEach((el,idx)=>{
+      const keys=['sun','rain','soil'];
+      const key=keys[idx];
+      const d=gs.metrics[key]-gs.prevMetrics[key];
+      if(d!==0){el.classList.add('pulse');setTimeout(()=>el.classList.remove('pulse'),600);}
+    });
+  },100);
+}
+
+function nextStage(){
+  gs.scenarioIdx++;
+  if(gs.scenarioIdx>=getScenarios().length){
+    gs.forest=[...gs.forest,gs.treeType]; // add once on completion
+    gs.screen='score';
+    render();
+    return;
+  }
+  gs.stageIdx=Math.min(gs.scenarioIdx,4);
+  gs.phase='choosing';
+  gs.lastChoice=null;
+  gs.xp=Math.min(gs.xp, gs.XP_PER_STAGE);
+  render();
+}
+
+function plantAnother(){
+  gs.screen='intro';gs.treeType=null;
+  gs.stageIdx=0;gs.scenarioIdx=0;
+  gs.metrics={sun:5,rain:5,soil:5};gs.prevMetrics={sun:5,rain:5,soil:5};
+  gs.xp=0;gs.phase='choosing';gs.lastChoice=null;
+  render();
+}
+
+/* ==================== TIPS ==================== */
+const TIPS_EN = [
+  { // Stage 0 — Resource Allocation
+    toggle: '💡 Strategy Tips: Resource Allocation',
+    tradeoffs_title: 'Key tradeoffs to consider',
+    tradeoffs: [
+      'Concentrating resources creates depth — spreading them creates coverage. Both are valid, but rarely at the same time.',
+      'A cash reserve is not wasted capital — it is optionality. It lets you respond to surprises without panic.',
+      'Speed-to-market matters most when the window is temporary. Ask: how long will this window stay open?'
+    ],
+    framework_label: 'Framework: Economic Moat Theory',
+    framework: '<strong>Warren Buffett\'s Moat Theory</strong> argues that durable businesses build defensive advantages — quality, switching costs, network effects — before scaling. Resource allocation in Stage 1 determines what kind of moat you\'re digging.',
+    reflect_title: 'Reflect on your choice',
+    reflects: [
+      'What did you prioritise — and why? Was it instinct or evidence?',
+      'What would you lose if you ran out of reserve in month 3?',
+      'How does your resource split reflect your risk tolerance?'
+    ]
+  },
+  { // Stage 1 — Competition Response
+    toggle: '💡 Strategy Tips: Responding to Competition',
+    tradeoffs_title: 'Key tradeoffs to consider',
+    tradeoffs: [
+      'Price cuts signal panic — customers and investors notice. Once you drop price, raising it back is very hard.',
+      'Niching down feels like shrinking, but it actually increases your defensibility per customer.',
+      'Out-innovating requires speed AND quality — a rushed feature can do more damage than no feature at all.'
+    ],
+    framework_label: 'Framework: Porter\'s Five Forces',
+    framework: '<strong>Michael Porter</strong> identified five forces that shape competition. The most important for startups: the threat of substitutes and rivalry intensity. Your response to a competitor defines which force you\'re fighting — and whether you choose the right battlefield.',
+    reflect_title: 'Reflect on your choice',
+    reflects: [
+      'Did you react to the competitor, or act from your own strategy?',
+      'Which of your customers are most at risk of switching — and why?',
+      'If the competitor left tomorrow, would your strategy still make sense?'
+    ]
+  },
+  { // Stage 2 — Scaling
+    toggle: '💡 Strategy Tips: Scaling Strategy',
+    tradeoffs_title: 'Key tradeoffs to consider',
+    tradeoffs: [
+      'Hiring before you have repeatable processes means every new person invents their own way of working.',
+      'Geographic expansion multiplies complexity — you now have two cultures, two markets, two sets of regulations.',
+      'Systems feel slow to build but compound fast — the time you invest in documentation pays back on every future hire.'
+    ],
+    framework_label: 'Framework: The E-Myth & Brooks\'s Law',
+    framework: '<strong>Michael Gerber\'s E-Myth</strong> shows that most founders build jobs, not businesses. Scaling requires shifting from doing to designing. <strong>Brooks\'s Law</strong> adds: "adding manpower to a late software project makes it later" — true for any complex knowledge work.',
+    reflect_title: 'Reflect on your choice',
+    reflects: [
+      'Is your team growing faster than your systems? What breaks first?',
+      'Could a new hire understand your core process in one week? If not, why not?',
+      'What does "scale" actually mean in your business — more customers, or more capability?'
+    ]
+  },
+  { // Stage 3 — Disruption
+    toggle: '💡 Strategy Tips: Navigating Disruption',
+    tradeoffs_title: 'Key tradeoffs to consider',
+    tradeoffs: [
+      'Acquisitions are fast but integration is slow. Cultural fit matters as much as technology fit.',
+      'Internal labs protect control but often lack the urgency and creativity of an independent startup.',
+      'Defending the core is a viable strategy — but only if you\'ve correctly estimated the disruption timeline.'
+    ],
+    framework_label: 'Framework: The Innovator\'s Dilemma',
+    framework: '<strong>Clayton Christensen</strong> showed that great companies fail not because they ignore disruption, but because they listen too closely to their best customers — who don\'t want change yet. The disruption always looks small until it isn\'t.',
+    reflect_title: 'Reflect on your choice',
+    reflects: [
+      'Who in your business has the most to lose from the disruption — and are they the ones making the decision?',
+      'If a 10-person startup could offer what the new technology offers, what would stop them?',
+      'What\'s your earliest warning signal that the disruption is accelerating?'
+    ]
+  },
+  { // Stage 4 — Legacy
+    toggle: '💡 Strategy Tips: Building for Legacy',
+    tradeoffs_title: 'Key tradeoffs to consider',
+    tradeoffs: [
+      'Harvest mode extracts value in the short term but erodes the culture and capability that generated it.',
+      'Open-sourcing your core technology is a bet that ecosystem value exceeds the value of exclusivity.',
+      'Leader development is the only strategy that compounds after you leave — it multiplies your impact.'
+    ],
+    framework_label: 'Framework: Built to Last & Ecosystem Strategy',
+    framework: '<strong>Jim Collins\'s research</strong> found that visionary companies are clock-builders, not time-tellers — they build systems that outlast any individual. <strong>Ecosystem strategy</strong> (Platform thinking) turns competitors into contributors by making your standard the common infrastructure.',
+    reflect_title: 'Reflect on your choice',
+    reflects: [
+      'If you left tomorrow, what would break first — and what does that tell you?',
+      'Are you building something that belongs to the future, or protecting something from the past?',
+      'What is the one thing only you can do, and what happens when you stop doing it?'
+    ]
+  }
+];
+
+const TIPS_PT = [
+  {
+    toggle: '💡 Dicas de Estratégia: Alocação de Recursos',
+    tradeoffs_title: 'Principais trade-offs a considerar',
+    tradeoffs: [
+      'Concentrar recursos cria profundidade — distribuí-los cria cobertura. Ambas são válidas, mas raramente ao mesmo tempo.',
+      'Uma reserva de caixa não é capital desperdiçado — é opcionalidade. Permite responder a surpresas sem pânico.',
+      'A velocidade de entrada no mercado importa mais quando a janela é temporária. Pergunta: quanto tempo essa janela ficará aberta?'
+    ],
+    framework_label: 'Framework: Teoria do Fosso Econômico',
+    framework: '<strong>A Teoria do Fosso de Warren Buffett</strong> argumenta que negócios duráveis constroem vantagens defensivas — qualidade, custos de troca, efeitos de rede — antes de escalar. A alocação de recursos no Estágio 1 determina que tipo de fosso você está cavando.',
+    reflect_title: 'Reflita sobre sua escolha',
+    reflects: [
+      'O que você priorizou — e por quê? Foi instinto ou evidência?',
+      'O que você perderia se ficasse sem reserva no mês 3?',
+      'Como a sua divisão de recursos reflete sua tolerância ao risco?'
+    ]
+  },
+  {
+    toggle: '💡 Dicas de Estratégia: Resposta à Concorrência',
+    tradeoffs_title: 'Principais trade-offs a considerar',
+    tradeoffs: [
+      'Cortes de preço sinalizam pânico — clientes e investidores percebem. Uma vez que você reduz o preço, aumentá-lo de volta é muito difícil.',
+      'Focar em nicho parece encolher, mas na verdade aumenta sua defensabilidade por cliente.',
+      'Superar em inovação requer velocidade E qualidade — uma funcionalidade precipitada pode causar mais dano do que nenhuma funcionalidade.'
+    ],
+    framework_label: 'Framework: As Cinco Forças de Porter',
+    framework: '<strong>Michael Porter</strong> identificou cinco forças que moldam a competição. A mais importante para startups: a ameaça de substitutos e a intensidade da rivalidade. Sua resposta a um concorrente define qual força você está enfrentando — e se você escolhe o campo de batalha certo.',
+    reflect_title: 'Reflita sobre sua escolha',
+    reflects: [
+      'Você reagiu ao concorrente, ou agiu a partir da sua própria estratégia?',
+      'Quais dos seus clientes estão mais em risco de mudar — e por quê?',
+      'Se o concorrente fosse embora amanhã, sua estratégia ainda faria sentido?'
+    ]
+  },
+  {
+    toggle: '💡 Dicas de Estratégia: Estratégia de Escalabilidade',
+    tradeoffs_title: 'Principais trade-offs a considerar',
+    tradeoffs: [
+      'Contratar antes de ter processos repetíveis significa que cada nova pessoa inventa sua própria forma de trabalhar.',
+      'A expansão geográfica multiplica a complexidade — você agora tem duas culturas, dois mercados, dois conjuntos de regulamentações.',
+      'Sistemas parecem lentos de construir, mas compõem rapidamente — o tempo investido em documentação se paga em cada contratação futura.'
+    ],
+    framework_label: 'Framework: O E-Myth e a Lei de Brooks',
+    framework: '<strong>O E-Myth de Michael Gerber</strong> mostra que a maioria dos fundadores constrói empregos, não negócios. Escalar requer passar de fazer para desenhar. <strong>A Lei de Brooks</strong> acrescenta: "adicionar mão de obra a um projeto atrasado o atrasa ainda mais" — válido para qualquer trabalho complexo do conhecimento.',
+    reflect_title: 'Reflita sobre sua escolha',
+    reflects: [
+      'Sua equipe está crescendo mais rápido do que seus sistemas? O que quebra primeiro?',
+      'Um novo contratado conseguiria entender seu processo central em uma semana? Se não, por quê?',
+      'O que "escalar" realmente significa no seu negócio — mais clientes, ou mais capacidade?'
+    ]
+  },
+  {
+    toggle: '💡 Dicas de Estratégia: Navegando pela Disrupção',
+    tradeoffs_title: 'Principais trade-offs a considerar',
+    tradeoffs: [
+      'Aquisições são rápidas, mas a integração é lenta. O alinhamento cultural importa tanto quanto o tecnológico.',
+      'Laboratórios internos protegem o controle, mas muitas vezes carecem da urgência e criatividade de uma startup independente.',
+      'Defender o núcleo é uma estratégia viável — mas somente se você estimou corretamente o cronograma da disrupção.'
+    ],
+    framework_label: 'Framework: O Dilema do Inovador',
+    framework: '<strong>Clayton Christensen</strong> mostrou que grandes empresas falham não porque ignoram a disrupção, mas porque ouvem de perto seus melhores clientes — que ainda não querem mudança. A disrupção sempre parece pequena até não ser.',
+    reflect_title: 'Reflita sobre sua escolha',
+    reflects: [
+      'Quem no seu negócio tem mais a perder com a disrupção — e são eles que estão tomando a decisão?',
+      'Se uma startup de 10 pessoas pudesse oferecer o que a nova tecnologia oferece, o que os impediria?',
+      'Qual é o seu sinal de alerta mais precoce de que a disrupção está acelerando?'
+    ]
+  },
+  {
+    toggle: '💡 Dicas de Estratégia: Construindo para o Legado',
+    tradeoffs_title: 'Principais trade-offs a considerar',
+    tradeoffs: [
+      'O modo colheita extrai valor a curto prazo, mas corrói a cultura e a capacidade que o gerou.',
+      'Tornar sua tecnologia central open source é uma aposta de que o valor do ecossistema supera o valor da exclusividade.',
+      'O desenvolvimento de líderes é a única estratégia que compõe depois que você sai — multiplica seu impacto.'
+    ],
+    framework_label: 'Framework: Feitas para Durar e Estratégia de Ecossistema',
+    framework: '<strong>A pesquisa de Jim Collins</strong> descobriu que empresas visionárias constroem relógios, não dizem as horas — elas constroem sistemas que sobrevivem a qualquer indivíduo. <strong>A estratégia de ecossistema</strong> transforma concorrentes em contribuidores, tornando seu padrão a infraestrutura comum.',
+    reflect_title: 'Reflita sobre sua escolha',
+    reflects: [
+      'Se você saísse amanhã, o que quebraria primeiro — e o que isso lhe diz?',
+      'Você está construindo algo que pertence ao futuro, ou protegendo algo do passado?',
+      'Qual é a única coisa que só você pode fazer, e o que acontece quando você para de fazê-la?'
+    ]
+  }
+];
+
+const TIPS_IT = [
+  {
+    toggle: '💡 Consigli Strategici: Allocazione delle Risorse',
+    tradeoffs_title: 'Principali trade-off da considerare',
+    tradeoffs: [
+      'Concentrare le risorse crea profondità — distribuirle crea copertura. Entrambe sono valide, ma raramente allo stesso tempo.',
+      'Una riserva di liquidità non è capitale sprecato — è opzionalità. Ti permette di rispondere alle sorprese senza panico.',
+      'La velocità di ingresso nel mercato conta di più quando la finestra è temporanea. Chiedi: quanto durerà questa finestra?'
+    ],
+    framework_label: 'Framework: Teoria del Fossato Economico',
+    framework: '<strong>La Teoria del Fossato di Warren Buffett</strong> sostiene che le aziende durature costruiscono vantaggi difensivi — qualità, costi di switching, effetti di rete — prima di scalare. L\'allocazione delle risorse nella Fase 1 determina che tipo di fossato stai scavando.',
+    reflect_title: 'Rifletti sulla tua scelta',
+    reflects: [
+      'Cosa hai prioritizzato — e perché? È stato istinto o evidenza?',
+      'Cosa perderesti se rimanessi senza riserva al mese 3?',
+      'Come la tua divisione di risorse riflette la tua tolleranza al rischio?'
+    ]
+  },
+  {
+    toggle: '💡 Consigli Strategici: Risposta alla Concorrenza',
+    tradeoffs_title: 'Principali trade-off da considerare',
+    tradeoffs: [
+      'I tagli di prezzo segnalano panico — clienti e investitori lo notano. Una volta abbassato il prezzo, rialzarlo è molto difficile.',
+      'Concentrarsi sulla nicchia sembra restringersi, ma in realtà aumenta la tua difendibilità per cliente.',
+      'Superare nell\'innovazione richiede velocità E qualità — una funzionalità affrettata può fare più danni di nessuna funzionalità.'
+    ],
+    framework_label: 'Framework: Le Cinque Forze di Porter',
+    framework: '<strong>Michael Porter</strong> ha identificato cinque forze che modellano la concorrenza. La più importante per le startup: la minaccia di sostituti e l\'intensità della rivalità. La tua risposta a un concorrente definisce quale forza stai combattendo — e se scegli il campo di battaglia giusto.',
+    reflect_title: 'Rifletti sulla tua scelta',
+    reflects: [
+      'Hai reagito al concorrente, o hai agito dalla tua strategia?',
+      'Quali dei tuoi clienti sono più a rischio di passare alla concorrenza — e perché?',
+      'Se il concorrente se ne andasse domani, la tua strategia avrebbe ancora senso?'
+    ]
+  },
+  {
+    toggle: '💡 Consigli Strategici: Strategia di Scalabilità',
+    tradeoffs_title: 'Principali trade-off da considerare',
+    tradeoffs: [
+      'Assumere prima di avere processi ripetibili significa che ogni nuova persona inventa il proprio modo di lavorare.',
+      'L\'espansione geografica moltiplica la complessità — ora hai due culture, due mercati, due set di normative.',
+      'I sistemi sembrano lenti da costruire ma si compongono rapidamente — il tempo investito nella documentazione si ripaga ad ogni futura assunzione.'
+    ],
+    framework_label: 'Framework: L\'E-Myth e la Legge di Brooks',
+    framework: '<strong>L\'E-Myth di Michael Gerber</strong> mostra che la maggior parte dei fondatori costruisce lavori, non aziende. Scalare richiede di passare dal fare al progettare. <strong>La Legge di Brooks</strong> aggiunge: "aggiungere manodopera a un progetto in ritardo lo ritarda ulteriormente" — valido per qualsiasi lavoro intellettuale complesso.',
+    reflect_title: 'Rifletti sulla tua scelta',
+    reflects: [
+      'Il tuo team sta crescendo più velocemente dei tuoi sistemi? Cosa si rompe per primo?',
+      'Un nuovo assunto potrebbe capire il tuo processo principale in una settimana? Se no, perché?',
+      'Cosa significa davvero "scalare" nel tuo business — più clienti, o più capacità?'
+    ]
+  },
+  {
+    toggle: '💡 Consigli Strategici: Navigare la Disruption',
+    tradeoffs_title: 'Principali trade-off da considerare',
+    tradeoffs: [
+      'Le acquisizioni sono veloci ma l\'integrazione è lenta. L\'allineamento culturale conta tanto quanto quello tecnologico.',
+      'I laboratori interni proteggono il controllo ma spesso mancano dell\'urgenza e della creatività di una startup indipendente.',
+      'Difendere il core è una strategia valida — ma solo se hai stimato correttamente la tempistica della disruption.'
+    ],
+    framework_label: 'Framework: Il Dilemma dell\'Innovatore',
+    framework: '<strong>Clayton Christensen</strong> ha dimostrato che le grandi aziende falliscono non perché ignorano la disruption, ma perché ascoltano troppo attentamente i loro migliori clienti — che non vogliono ancora cambiamenti. La disruption sembra sempre piccola finché non lo è.',
+    reflect_title: 'Rifletti sulla tua scelta',
+    reflects: [
+      'Chi nella tua azienda ha più da perdere dalla disruption — e sono loro a prendere la decisione?',
+      'Se una startup di 10 persone potesse offrire ciò che offre la nuova tecnologia, cosa li fermerebbe?',
+      'Qual è il tuo primo segnale d\'allarme che la disruption sta accelerando?'
+    ]
+  },
+  {
+    toggle: '💡 Consigli Strategici: Costruire per il Futuro',
+    tradeoffs_title: 'Principali trade-off da considerare',
+    tradeoffs: [
+      'La modalità raccolta estrae valore nel breve termine ma erode la cultura e la capacità che lo ha generato.',
+      'Rendere open source la tua tecnologia core è una scommessa che il valore dell\'ecosistema supera il valore dell\'esclusività.',
+      'Lo sviluppo dei leader è l\'unica strategia che si compone dopo che te ne sei andato — moltiplica il tuo impatto.'
+    ],
+    framework_label: 'Framework: Built to Last e Strategia di Ecosistema',
+    framework: '<strong>La ricerca di Jim Collins</strong> ha scoperto che le aziende visionarie costruiscono orologi, non dicono l\'ora — costruiscono sistemi che sopravvivono a qualsiasi individuo. <strong>La strategia di ecosistema</strong> trasforma i concorrenti in contributori rendendo il tuo standard l\'infrastruttura comune.',
+    reflect_title: 'Rifletti sulla tua scelta',
+    reflects: [
+      'Se te ne andassi domani, cosa si romperebbe per primo — e cosa ti dice questo?',
+      'Stai costruendo qualcosa che appartiene al futuro, o proteggendo qualcosa dal passato?',
+      'Qual è l\'unica cosa che solo tu puoi fare, e cosa succede quando smetti di farlo?'
+    ]
+  }
+];
+
+const SCORE_REFLECTIONS = {
+  en: {
+    title: 'Reflection Questions — take these into the real world',
+    questions: [
+      'Looking at your three scores, which one surprised you most — and what decision caused it?',
+      'Which choice felt hardest to make? What does that reveal about your natural instincts as a strategist?',
+      'If you played again with a different tree, what would you do differently — and why?',
+      'How do your in-game decisions mirror real choices you face or have faced in your work?',
+      'Which Root Insight resonated most with you — and how could you apply it this week?'
+    ]
+  },
+  pt: {
+    title: 'Questões para Reflexão — leve-as para o mundo real',
+    questions: [
+      'Olhando para suas três pontuações, qual te surpreendeu mais — e qual decisão a causou?',
+      'Qual escolha foi mais difícil de fazer? O que isso revela sobre seus instintos naturais como estrategista?',
+      'Se você jogasse novamente com uma árvore diferente, o que faria de diferente — e por quê?',
+      'Como suas decisões no jogo espelham escolhas reais que você enfrenta ou enfrentou no trabalho?',
+      'Qual Insight Raiz ressoou mais com você — e como poderia aplicá-lo esta semana?'
+    ]
+  },
+  it: {
+    title: 'Domande di Riflessione — portale nel mondo reale',
+    questions: [
+      'Guardando i tuoi tre punteggi, quale ti ha sorpreso di più — e quale decisione l\'ha causato?',
+      'Quale scelta è stata più difficile da fare? Cosa rivela sui tuoi istinti naturali come stratega?',
+      'Se giocassi di nuovo con un albero diverso, cosa faresti diversamente — e perché?',
+      'Come le tue decisioni nel gioco rispecchiano scelte reali che affronti o hai affrontato nel lavoro?',
+      'Quale Intuizione Radice ti ha colpito di più — e come potresti applicarla questa settimana?'
+    ]
+  }
+};
+
+function getTips(){ return lang==='pt'?TIPS_PT:lang==='it'?TIPS_IT:TIPS_EN; }
+
+function toggleTip(id){
+  const body=document.getElementById('tip-body-'+id);
+  const chev=document.getElementById('tip-chev-'+id);
+  if(!body||!chev) return;
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open',!isOpen);
+  chev.classList.toggle('open',!isOpen);
+}
+
+function buildTipPanel(scenarioIdx){
+  const tips=getTips();
+  const tip=tips[Math.min(scenarioIdx,tips.length-1)];
+  if(!tip) return '';
+  const id='tip'+scenarioIdx;
+  return `<div class="tip-panel">
+    <button class="tip-toggle" onclick="toggleTip('${id}')">
+      <span class="tip-icon">💡</span>
+      <span class="tip-toggle-label">${tip.toggle.replace('💡 ','')}</span>
+      <span class="tip-chevron" id="tip-chev-${id}">▼</span>
+    </button>
+    <div class="tip-body" id="tip-body-${id}">
+      <div class="tip-inner">
+        <div class="tip-section">
+          <div class="tip-section-title">${tip.tradeoffs_title}</div>
+          ${tip.tradeoffs.map((tr,i)=>`<div class="tip-item"><span class="tip-bullet">${i+1}</span><span>${tr}</span></div>`).join('')}
+        </div>
+        <div class="tip-divider"></div>
+        <div class="tip-section">
+          <div class="tip-section-title">${tip.framework_label}</div>
+          <div class="tip-framework">${tip.framework}</div>
+        </div>
+        <div class="tip-divider"></div>
+        <div class="tip-section">
+          <div class="tip-section-title">${tip.reflect_title}</div>
+          ${tip.reflects.map(r=>`<div class="tip-item"><span class="tip-bullet">?</span><span>${r}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function buildOutcomeTipPanel(scenarioIdx){
+  const tips=getTips();
+  const tip=tips[Math.min(scenarioIdx,tips.length-1)];
+  if(!tip) return '';
+  const id='otip'+scenarioIdx;
+  const label=lang==='pt'?'Aprofundar o insight':lang==='it'?'Approfondisci l\'insight':'Deepen this insight';
+  return `<div class="tip-panel" style="margin-top:0.75rem">
+    <button class="tip-toggle" onclick="toggleTip('${id}')">
+      <span class="tip-icon">📚</span>
+      <span class="tip-toggle-label">${label}</span>
+      <span class="tip-chevron" id="tip-chev-${id}">▼</span>
+    </button>
+    <div class="tip-body" id="tip-body-${id}">
+      <div class="tip-inner">
+        <div class="tip-section">
+          <div class="tip-section-title">${tip.framework_label}</div>
+          <div class="tip-framework">${tip.framework}</div>
+        </div>
+        <div class="tip-divider"></div>
+        <div class="tip-section">
+          <div class="tip-section-title">${tip.reflect_title}</div>
+          ${tip.reflects.map(r=>`<div class="tip-item"><span class="tip-bullet">?</span><span>${r}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function buildScoreReflections(){
+  const ref=SCORE_REFLECTIONS[lang]||SCORE_REFLECTIONS['en'];
+  return `<div class="reflection-card">
+    <div class="reflection-title">${ref.title}</div>
+    ${ref.questions.map(q=>`<div class="reflection-q">${q}</div>`).join('')}
+  </div>`;
+}
+
+/* ==================== PARTICLES ==================== */
+function spawnParticles(){
+  const colors=['#52B788','#A8DABC','#C8E6C9','#F4A261','#FDE8C8'];
+  for(let i=0;i<18;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    const size=Math.random()*5+2;
+    p.style.cssText=`
+      width:${size}px;height:${size}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      left:${Math.random()*100}vw;
+      animation-duration:${Math.random()*20+15}s;
+      animation-delay:${Math.random()*20}s;
+    `;
+    document.body.appendChild(p);
+  }
+}
+
+spawnParticles();
+render();
+</script>
+</body>
+</html>
